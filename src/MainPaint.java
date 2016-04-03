@@ -4,6 +4,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.net.URL;
 
 import javax.swing.*;
 
@@ -16,7 +17,7 @@ public class MainPaint extends JFrame {
 	JPanel mainP;
 	PaintPanel drawP;
 	String[] btnName = {"자유", "지우개", "선", "네모", "동글", "둥근네모"};
-	String[] path = {"resources/draw_pencil.png", "resources/draw_eraser.png", "resources/draw_line.png", "resources/draw_rectangle.png", "resources/draw_oval.png", "resources/draw_roundedrec.png"};
+	String[] path = {"draw_pencil.png", "draw_eraser.png", "draw_line.png", "draw_rectangle.png", "draw_oval.png", "draw_roundedrec.png"};
 	ImageButton[] Tbtn = new ImageButton[6];
 	ButtonGroup bg = new ButtonGroup();	//토글 버튼들 묶어주는 버튼 그룹
 	/* 생성자 */
@@ -97,16 +98,16 @@ public class MainPaint extends JFrame {
 		JPanel leftP = new JPanel();
 		/* 메뉴 패널 내에 배치할 패널 */
 		JPanel btnP = new JPanel();
-		ImageButton fill = new ImageButton("resources/draw_emp.png", false);
 		
+		ImageButton fill = new ImageButton("draw_emp.png", false);
 		leftP.setPreferredSize(new Dimension(160, 800));
 		leftP.setBackground(Color.LIGHT_GRAY);
 		leftP.setLayout(null);
+		/* 그리기 도구 버튼들 : 자유곡선, 지우개, 직선, 네모, 동그라미, 둥근네모 */
 		btnP.setLayout(new GridLayout(3, 2));
 		for (int i=0; i<btnName.length; i++)
 		{
 			Tbtn[i] = new ImageButton(path[i], i==0?true:false);	//기본 설정을 자유곡선으로
-			Tbtn[i].setIcon(new ImageIcon(path[i]));
 			Tbtn[i].setSize(new Dimension(65, 65));
 			Tbtn[i].addMouseListener(new BtnListener());
 			btnP.add(Tbtn[i]);
@@ -114,10 +115,19 @@ public class MainPaint extends JFrame {
 		}
 		btnP.setSize(130, 195);
 		btnP.setLocation(15, 30);
-		leftP.add(btnP);
-		fill.setSelectedIcon(new ImageIcon("resources/draw_fill.png"));
+		/* 채우기 버튼 */
+		//fill.setSelectedIcon(new ImageIcon("draw_fill.png"));
+		fill.setSelectedIcon(new ImageIcon(getClass().getClassLoader().getResource("draw_fill.png")));
 		fill.setSize(65, 65);
 		fill.setLocation(47, 300);
+		fill.addActionListener(new ActionListener() {		
+			@Override	/* 채우기 토글 여부 : true or false 페인트패널에 전달하기 위해 fill 필드 변경 */
+			public void actionPerformed(ActionEvent e) {
+				drawP.shape.fill = !drawP.shape.fill;	// t->f / f->t
+				System.out.println("fill : "+drawP.shape.fill);
+			}
+		});
+		leftP.add(btnP);
 		leftP.add(fill);
 		mainP.add(leftP, BorderLayout.WEST);
 	}

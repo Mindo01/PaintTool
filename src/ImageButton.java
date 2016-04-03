@@ -1,15 +1,12 @@
 import java.awt.*;
+
 import javax.swing.*;
 
 class ImageButton extends JToggleButton {
 
   public ImageButton(String path, boolean flag) {
-	  super(new ImageIcon(path), flag);
-	  /*ImageIcon icon = new ImageIcon(path);
-	  Image img = icon.getImage();  //ImageIcon을 Image로 변환.
-	  Image chimg = img.getScaledInstance(65, 65, java.awt.Image.SCALE_SMOOTH);
-	  ImageIcon chicon = new ImageIcon(chimg); //Image로 ImageIcon 생성
-	  setIcon(chicon);*/
+	  //super(new ImageIcon(path), flag);
+	  setIcon(new ImageIcon(getClass().getClassLoader().getResource(path)));
   }
 
   public ImageButton(ImageIcon icon) {

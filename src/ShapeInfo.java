@@ -13,33 +13,36 @@ public class ShapeInfo {
 	Vector<Point> point = new Vector<Point>();
 	int type;		//도형 타입 (자유, 선, 원, 네모, 둥근 네모 ...)
 	Color color;	//선 색상
-	Stroke stroke;	//선 굵기
+	BasicStroke stroke;	//선 굵기
 	boolean fill;	//채우기 여부	true 채우기 / false 안채우기
 	public ShapeInfo () {
 		type = -1;
 		color = Color.BLACK;
 		fill = false;
 	}
-	
+	/* 벡터에 포인트 저장 : add 시점의 좌표 저장 */
 	public void add(Point point) {
 		this.point.add(point);
 	}
+	/* 포인트 벡터 불러오기 */
 	public Vector<Point> get() {
 		return point;
 	}
-	
+	/* 색상 설정 */
 	public void setColor(Color color) {
 		this.color = color;
 	}
+	/* 색상 불러오기 */
 	public Color getColor() {
 		return color;
 	}
-	
+	/* 선 굵기 설정 */
 	public void setStroke(int size) {
 		BasicStroke tmp = new BasicStroke(size);
 		this.stroke = tmp;
 	}
-	public Stroke getStroke() {
+	/* 선 굵기 불러오기 */
+	public BasicStroke getStroke() {
 		return stroke;
 	}
 	/* 사각형 객체 반환 : p1과 p2의 좌표 차이를 절대값으로 계산 후 반환 

@@ -12,7 +12,7 @@ public class PaintPanel extends JPanel {
 	private Graphics g1 = b1.getGraphics(); // 실제 그려지는 영역
 	
 	ShapeInfo shape = new ShapeInfo();
-	int drawM = 1;	//그리기 모드	
+	int drawM = 1;	//그리기 모드	// 이거 또는 shape내의 type필드 둘 중 하나 선택하고 지우기 *******
 	/* 그리기 모드에 대응하는 상수들 */
 	final static int PENCIL = 1;	//자유 곡선
 	final static int ERASE = 2;		//지우기
@@ -35,14 +35,15 @@ public class PaintPanel extends JPanel {
 		public void mousePressed(MouseEvent e) {
 			// 첫 시작점 저장
 			shape.add(e.getPoint());
+			((Graphics2D)g1).setStroke(shape.getStroke());
 		}
 		public void mouseReleased(MouseEvent e) {
 			shape.add(e.getPoint());
 			Point sp = shape.get().firstElement();
 			Point ep = shape.get().lastElement();
-			((Graphics2D) g1).setStroke(shape.stroke);
+			((Graphics2D) g1).setStroke(shape.getStroke());
 			g1.setColor(shape.getColor());
-			Rectangle rect;
+			Rectangle rect = shape.getRect(sp, ep);
 			switch (drawM)
 			{
 				case ERASE :
@@ -53,17 +54,23 @@ public class PaintPanel extends JPanel {
 				case LINE : 
 					g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
 					break;
-				case REC :
-					rect = shape.getRect(sp, ep);
-					g1.drawRect(rect.x, rect.y, rect.width, rect.height);
+				case REC :	
+					if (shape.fill == false)
+						g1.drawRect(rect.x, rect.y, rect.width, rect.height);
+					else
+						g1.fillRect(rect.x, rect.y, rect.width, rect.height);
 					break;
 				case OVAL :
-					rect = shape.getRect(sp, ep);
-					g1.drawOval(rect.x, rect.y, rect.width, rect.height);
+					if (shape.fill == false)
+						g1.drawOval(rect.x, rect.y, rect.width, rect.height);
+					else
+						g1.fillOval(rect.x, rect.y, rect.width, rect.height);
 					break;
 				case ROUNDREC :
-					rect = shape.getRect(sp, ep);
-					g1.drawRoundRect(rect.x, rect.y, rect.width, rect.height, 50, 50);	//뒤에 두 인자는 둥근 정도 수치
+					if (shape.fill == false)
+						g1.drawRoundRect(rect.x, rect.y, rect.width, rect.height, 50, 50);	//뒤에 두 인자는 둥근 정도 수치
+					else
+						g1.fillRoundRect(rect.x, rect.y, rect.width, rect.height, 50, 50);
 					break;
 			}
 			repaint();
@@ -92,7 +99,7 @@ public class PaintPanel extends JPanel {
 			else
 			{
 				Graphics g2 = getGraphics();
-				Rectangle rect;
+				Rectangle rect = shape.getRect(sp, ep);;
 				((Graphics2D) g2).setStroke(shape.stroke);
 				g2.setColor(shape.getColor());
 				switch (drawM)
@@ -101,16 +108,22 @@ public class PaintPanel extends JPanel {
 						g2.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
 						break;
 					case REC :
-						rect = shape.getRect(sp, ep);
-						g2.drawRect(rect.x, rect.y, rect.width, rect.height);
+						if (shape.fill == false)
+							g2.drawRect(rect.x, rect.y, rect.width, rect.height);
+						else
+							g2.fillRect(rect.x, rect.y, rect.width, rect.height);
 						break;
 					case OVAL :
-						rect = shape.getRect(sp, ep);
-						g2.drawOval(rect.x, rect.y, rect.width, rect.height);
+						if (shape.fill == false)
+							g2.drawOval(rect.x, rect.y, rect.width, rect.height);
+						else
+							g2.fillOval(rect.x, rect.y, rect.width, rect.height);
 						break;
 					case ROUNDREC :
-						rect = shape.getRect(sp, ep);
-						g2.drawRoundRect(rect.x, rect.y, rect.width, rect.height, 50, 50);	//뒤에 두 인자는 둥근 정도 수치
+						if (shape.fill == false)
+							g2.drawRoundRect(rect.x, rect.y, rect.width, rect.height, 50, 50);	//뒤에 두 인자는 둥근 정도 수치
+						else
+							g2.fillRoundRect(rect.x, rect.y, rect.width, rect.height, 50, 50);
 						break;
 				}
 				getParent().repaint();
