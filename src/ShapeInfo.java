@@ -42,4 +42,16 @@ public class ShapeInfo {
 	public Stroke getStroke() {
 		return stroke;
 	}
+	/* 사각형 객체 반환 : p1과 p2의 좌표 차이를 절대값으로 계산 후 반환 
+	 * 어디에 쓰나? 시작점보다 드래그/클릭해제된 점의 좌표가 적을 때, 안 그려지는 오류 처리
+	 * */
+	public Rectangle getRect(Point p1, Point p2) {
+		Rectangle rect = null;
+		int minX = Math.min(p1.x, p2.x);
+		int maxX = Math.max(p1.x, p2.x);
+		int minY = Math.min(p1.y, p2.y);
+		int maxY = Math.max(p1.y, p2.y);
+		rect = new Rectangle(minX, minY, maxX - minX, maxY - minY);
+		return rect;
+	}
 }

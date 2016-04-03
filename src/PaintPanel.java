@@ -35,17 +35,37 @@ public class PaintPanel extends JPanel {
 		public void mousePressed(MouseEvent e) {
 			// 첫 시작점 저장
 			shape.add(e.getPoint());
-			System.out.println("눌렸따!");
-			
 		}
 		public void mouseReleased(MouseEvent e) {
 			shape.add(e.getPoint());
 			Point sp = shape.get().firstElement();
 			Point ep = shape.get().lastElement();
 			((Graphics2D) g1).setStroke(shape.stroke);
-			g1.setColor(Color.BLUE);
-			g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
-			System.out.println("풀렸따!");
+			g1.setColor(shape.getColor());
+			Rectangle rect;
+			switch (drawM)
+			{
+				case ERASE :
+					g1.setColor(Color.WHITE);
+				case PENCIL :
+					g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
+					break;
+				case LINE : 
+					g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
+					break;
+				case REC :
+					rect = shape.getRect(sp, ep);
+					g1.drawRect(rect.x, rect.y, rect.width, rect.height);
+					break;
+				case OVAL :
+					rect = shape.getRect(sp, ep);
+					g1.drawOval(rect.x, rect.y, rect.width, rect.height);
+					break;
+				case ROUNDREC :
+					rect = shape.getRect(sp, ep);
+					g1.drawRoundRect(rect.x, rect.y, rect.width, rect.height, 50, 50);	//뒤에 두 인자는 둥근 정도 수치
+					break;
+			}
 			repaint();
 			/* 저장된 포인트 모두 삭제 */
 			shape.get().clear();
@@ -54,15 +74,47 @@ public class PaintPanel extends JPanel {
 			shape.add(e.getPoint());
 			Point sp = shape.get().firstElement();
 			Point ep = shape.get().lastElement();
-			/* 그리기 모드에 따라 다른 상황으로 */
-			Graphics g2 = getGraphics();
-			((Graphics2D) g2).setStroke(shape.stroke);
-			g2.setColor(Color.BLUE);
-			g2.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
-			
-			
-			
-			getParent().repaint();
+			/* 그리기 모드에 따라 다른 상황으로
+			 * 자유곡선, 지우기는 드래그도 그대로 그림판에 입력
+			 * 나머지 기능은 드래그 과정은 그냥 보여주기만 (실질적 입력이 아님 - 지역 객체 g2 사용)
+			 */
+			if (drawM == PENCIL || drawM == ERASE)	// 자유곡선, 지우개일 때
+			{
+				((Graphics2D) g1).setStroke(shape.stroke);
+				g1.setColor(shape.getColor());
+				if (drawM == ERASE)
+					g1.setColor(Color.WHITE);
+				g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
+				
+				repaint();
+				shape.get().clear();
+			}
+			else
+			{
+				Graphics g2 = getGraphics();
+				Rectangle rect;
+				((Graphics2D) g2).setStroke(shape.stroke);
+				g2.setColor(shape.getColor());
+				switch (drawM)
+				{
+					case LINE : 
+						g2.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
+						break;
+					case REC :
+						rect = shape.getRect(sp, ep);
+						g2.drawRect(rect.x, rect.y, rect.width, rect.height);
+						break;
+					case OVAL :
+						rect = shape.getRect(sp, ep);
+						g2.drawOval(rect.x, rect.y, rect.width, rect.height);
+						break;
+					case ROUNDREC :
+						rect = shape.getRect(sp, ep);
+						g2.drawRoundRect(rect.x, rect.y, rect.width, rect.height, 50, 50);	//뒤에 두 인자는 둥근 정도 수치
+						break;
+				}
+				getParent().repaint();
+			}
 		}
 		/* 사용하지 않는 메소드들 : 사용하지 않아도 implements 했기 때문에 빈 상태로 오버라이드 */
 		public void mouseMoved(MouseEvent e) {}
@@ -71,6 +123,14 @@ public class PaintPanel extends JPanel {
 		public void mouseExited(MouseEvent e) {}
 	}
 
+	/* 그림판 새로 시작하기 */
+	public void init() {
+		g1.setColor(Color.WHITE);
+		g1.fillRect(0, 0, 1000, 800);
+		g1.drawImage(new ImageIcon().getImage(), 0, 0, null);
+		repaint();
+	}
+	/* repaint() 호출 시 실행되는 메소드 */
 	public void paint(Graphics g) {
 		g.drawImage(b1, 0, 0, null);
 	}
