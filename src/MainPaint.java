@@ -98,7 +98,7 @@ public class MainPaint extends JFrame {
 		JPanel leftP = new JPanel();
 		/* 메뉴 패널 내에 배치할 패널 */
 		JPanel btnP = new JPanel();
-		
+		JLabel fillLabel = new JLabel("채우기");
 		ImageButton fill = new ImageButton("draw_emp.png", false);
 		leftP.setPreferredSize(new Dimension(160, 800));
 		leftP.setBackground(Color.LIGHT_GRAY);
@@ -116,8 +116,11 @@ public class MainPaint extends JFrame {
 		btnP.setSize(130, 195);
 		btnP.setLocation(15, 30);
 		/* 채우기 버튼 */
+		fillLabel.setSize(50, 50);
+		fillLabel.setLocation(54, 265);
+		fillLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		//fill.setSelectedIcon(new ImageIcon("draw_fill.png"));
-		fill.setSelectedIcon(new ImageIcon(getClass().getClassLoader().getResource("draw_fill.png")));
+		fill.setSelectedIcon(new ImageIcon(getClass().getClassLoader().getResource("draw_fills.png")));
 		fill.setSize(65, 65);
 		fill.setLocation(47, 300);
 		fill.addActionListener(new ActionListener() {		
@@ -128,6 +131,7 @@ public class MainPaint extends JFrame {
 			}
 		});
 		leftP.add(btnP);
+		leftP.add(fillLabel);
 		leftP.add(fill);
 		mainP.add(leftP, BorderLayout.WEST);
 	}

@@ -26,7 +26,7 @@ public class PaintPanel extends JPanel {
 		g1.fillRect(0, 0, 1000, 800);
 		g1.drawImage(new ImageIcon().getImage(), 0, 0, null);
 		/* 기본 선 굵기 설정 */
-		shape.setStroke(3);
+		shape.setStroke(5);
 		addMouseListener( new PaintListener());
 		addMouseMotionListener( new PaintListener());
 	}
@@ -49,6 +49,7 @@ public class PaintPanel extends JPanel {
 				case ERASE :
 					g1.setColor(Color.WHITE);
 				case PENCIL :
+					sp = shape.point.size() > 1 ? shape.point.get(shape.point.size() - 2) : shape.point.firstElement();
 					g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
 					break;
 				case LINE : 
@@ -91,10 +92,10 @@ public class PaintPanel extends JPanel {
 				g1.setColor(shape.getColor());
 				if (drawM == ERASE)
 					g1.setColor(Color.WHITE);
+				sp = shape.point.size() > 1 ? shape.point.get(shape.point.size() - 2) : shape.point.firstElement();
 				g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
 				
 				repaint();
-				shape.get().clear();
 			}
 			else
 			{
