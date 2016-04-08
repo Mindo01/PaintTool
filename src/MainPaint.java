@@ -20,9 +20,10 @@ public class MainPaint extends JFrame {
 	String[] path = {"draw_pencil.png", "draw_eraser.png", "draw_line.png", "draw_rectangle.png", "draw_oval.png", "draw_roundedrec.png"};
 	ImageButton[] Tbtn = new ImageButton[6];
 	ButtonGroup bg = new ButtonGroup();	//토글 버튼들 묶어주는 버튼 그룹
+
 	/* 생성자 */
 	public MainPaint() {
-		setTitle("민주 그림판");
+		setTitle("민주 그림판 - 제목 없음.png");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		/* 화면 중앙에 생성 */
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -30,13 +31,14 @@ public class MainPaint extends JFrame {
 		contentP = getContentPane();
 		mainP = new JPanel();
 		mainP.setLayout(new BorderLayout());
-		drawP = new PaintPanel();
+		drawP = new PaintPanel(null);
 		/* 메뉴 바 생성 */
 		createMenu();
 		/* 사이드 메뉴 생성 */
 		leftPanel();
 		/* 툴바 메뉴 생성 */
 		colorPanel();
+		/* paintPanel 추가 : 실질적으로 그림 그리는 공간 */
 		mainP.add(drawP, BorderLayout.CENTER);
 		contentP.add(mainP, BorderLayout.CENTER);
 		/* 윈도우 룩앤필 설정 (기본은 자바) */
@@ -64,12 +66,53 @@ public class MainPaint extends JFrame {
 		nameMenu = new JMenu("도움");	// 기타 메뉴
 		fileMenu.setForeground(Color.WHITE);
 		nameMenu.setForeground(Color.WHITE);
-		/* 메뉴 아이템들 */
+		/* 메뉴 아이템들 생성 */
 		newFile = new JMenuItem("새로 만들기");
 		save = new JMenuItem("저장");
 		saveAs = new JMenuItem("다른 이름으로 저장");
 		open = new JMenuItem("열기");
 		nameM = new JMenuItem("만든이 정보");
+		/* 메뉴 아이템에 대한 리스너 등록 */
+		newFile.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				/* 기존 있던 이미지 저장하는지 확인 */
+				// 다이얼로그.... 추가하기
+				/* PaintPanel 클래스 내의 init() 메소드를 호출 */
+				drawP.init(null);
+			}
+		});
+		save.addActionListener(new ActionListener() {		
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String title = drawP.save();
+				/* 타이틀에 방금 저장한 파일 이름 띄우기 */
+				if (title == null)
+					title = "제목 없음.png";
+				setTitle("민주 그림판 - "+title);
+			}
+		});
+		saveAs.addActionListener(new ActionListener() {		
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String title = drawP.saveAs();
+				/* 타이틀에 방금 저장한 파일 이름 띄우기 */
+				if (title == null)
+					title = "제목 없음.png";
+				setTitle("민주 그림판 - "+title);
+			}
+		});
+		open.addActionListener(new ActionListener() {		
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String title = drawP.open();
+				/* 타이틀에 방금 연 파일 이름 띄우기 */
+				if (title == null)
+					title = "제목 없음.png";
+				setTitle("민주 그림판 - "+title);
+				
+			}
+		});
 		/* 만든이 정보 다이얼로그 */
 		MJDialog dialog = new MJDialog(this,"만든이 정보");
 		/* 만든이 정보 클릭 시, 다이얼로그 창으로 안내 */
@@ -148,7 +191,7 @@ public class MainPaint extends JFrame {
 		newBtn.addActionListener(new ActionListener() {			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				drawP.init();
+				drawP.init(null);
 			}
 		});
 		nowColor.setSize(60, 60);
@@ -196,6 +239,8 @@ public class MainPaint extends JFrame {
 		public void mouseEntered(MouseEvent e) { }
 		public void mouseExited(MouseEvent e) {	}
 	}
+	
+	
 	
 	/* 메인 : 프레임 생성 및 창 생성! */
 	public static void main(String[] args) {

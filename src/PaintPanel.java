@@ -1,8 +1,13 @@
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Vector;
+
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 /*
  * 실질적으로 그림을 그리는 패널
  * 마우스 클릭/해제/드래그 때의 리스너를 등록해놓았다.
@@ -10,7 +15,7 @@ import javax.swing.*;
 public class PaintPanel extends JPanel {
 	private BufferedImage b1 = new BufferedImage(1000, 800, BufferedImage.TYPE_3BYTE_BGR);
 	private Graphics g1 = b1.getGraphics(); // 실제 그려지는 영역
-	
+	String thisPath = null;
 	ShapeInfo shape = new ShapeInfo();
 	int drawM = 1;	//그리기 모드	// 이거 또는 shape내의 type필드 둘 중 하나 선택하고 지우기 *******
 	/* 그리기 모드에 대응하는 상수들 */
@@ -21,10 +26,10 @@ public class PaintPanel extends JPanel {
 	final static int OVAL = 5;		//원(타원)
 	final static int ROUNDREC = 6;	//둥근 네모
 
-	public PaintPanel () {
+	public PaintPanel (String path) {
 		setBackground(Color.WHITE);
 		g1.fillRect(0, 0, 1000, 800);
-		g1.drawImage(new ImageIcon().getImage(), 0, 0, null);
+		g1.drawImage(new ImageIcon(path).getImage(), 0, 0, null);
 		/* 기본 선 굵기 설정 */
 		shape.setStroke(5);
 		addMouseListener( new PaintListener());
@@ -138,11 +143,107 @@ public class PaintPanel extends JPanel {
 	}
 
 	/* 그림판 새로 시작하기 */
-	public void init() {
+	public void init(String path) {
 		g1.setColor(Color.WHITE);
 		g1.fillRect(0, 0, 1000, 800);
-		g1.drawImage(new ImageIcon().getImage(), 0, 0, null);
+		g1.drawImage(new ImageIcon(path).getImage(), 0, 0, null);
 		repaint();
+	}
+	/* 열기 다이얼로그 출력하고 파일 이름 불러오는 메소드 */
+	public String open() {
+		/* JFileChooser 객체 생성 */
+		JFileChooser chooser = new JFileChooser();
+		/* 파일 필터 객체 생성 : png, jpg */
+		FileNameExtensionFilter filter1 = new FileNameExtensionFilter("PNG(*.png)", "png");
+		FileNameExtensionFilter filter2 = new FileNameExtensionFilter("JPG(*.jpg)", "jpg");
+		/* chooser에 파일 필터 설정 */
+		chooser.setFileFilter(filter1);
+		chooser.setFileFilter(filter2);
+		/* 열기 다이얼로그 출력 */
+		int ret = chooser.showOpenDialog(null);
+		/* 파일 선택 안할 시 경고창 띄우기 */
+		if (ret != JFileChooser.APPROVE_OPTION) {
+			JOptionPane.showMessageDialog(null, "파일을 선택하지 않았습니다", "경고", JOptionPane.WARNING_MESSAGE);
+			return null;
+		}
+		/* 사용자가 선택한 파일 이름 알아내기 */
+		String pathName = chooser.getSelectedFile().getPath();
+		String fileName = chooser.getSelectedFile().getName();
+		/* 열기 선택한 파일을 가져와 그림 패널 초기화 */
+		init(pathName);
+		/* 파일 이름으로 타이틀 설정 */
+		return fileName;
+	}
+	/* 저장 다이얼로그 출력하고 파일 이름 불러오는 메소드 */
+	public String saveAs() {
+		/* JFileChooser 객체 생성 */
+		JFileChooser chooser = new JFileChooser();
+		/* 파일 필터 객체 생성 : png, jpg */
+		FileNameExtensionFilter filter1 = new FileNameExtensionFilter("PNG(*.png)", "png");
+		FileNameExtensionFilter filter2 = new FileNameExtensionFilter("JPG(*.jpg)", "jpg");
+		/* chooser에 파일 필터 설정 */
+		chooser.setFileFilter(filter1);
+		chooser.setFileFilter(filter2);
+		/* 열기 다이얼로그 출력 */
+		int ret = chooser.showSaveDialog(null);
+		/* 닫기 버튼 입력 시 그냥 닫기 */
+		if (ret == JFileChooser.CANCEL_OPTION) {
+			return null;
+		}
+
+		File file = chooser.getSelectedFile();
+		String fileName = file.getName();
+		if (fileName.contains(".jpg") || fileName.contains(".JPG") || fileName.contains(".png") || fileName.contains(".PNG"))
+			;
+		else
+			/* 아무 확장자도 입력안 할 때, 기본 확장자는 .png로 자동 설정 */
+			file = new File(chooser.getSelectedFile() + ".png");
+		
+		/* 이미 존재하는 파일일 경우 */
+		if (file.isFile())
+		{
+			JLabel message = new JLabel();
+			message.setText("이미 존재하는 파일입니다. 바꾸시겠습니까?");
+			/* 바꾸지 않겠다고 클릭하면 종료 */
+			if (!(JOptionPane.showConfirmDialog(null, message, "확인", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION))
+				return null;
+		}
+		
+		/* 실질적인 파일 저장 : ImageIO.write을 사용해 버퍼이미지 b1을 파일형태로 저장 */
+		try {
+			/* 선택된 파일 유형에 따라 저장을 달리함 */
+			if (chooser.getFileFilter().equals(filter1))
+				ImageIO.write(b1, "png", file);
+			else
+				ImageIO.write(b1, "jpg", file);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		thisPath = file.getPath();
+		return fileName;
+	}
+	public String save() {
+		/* 제목없음.png의 상태. 아직 저장한 적이 없는 파일일 경우, '다음이름으로 저장'하는 단계로 보낸다 */
+		if (thisPath == null)
+		{
+			return saveAs();
+		}
+		/* filechooser 부를 것 없이, 그 파일에 그대로 저장 */
+		File file = new File(thisPath);
+		String fileName = file.getName();
+		
+		/* 실질적인 파일 저장 : ImageIO.write을 사용해 버퍼이미지 b1을 파일형태로 저장 */
+		try {
+			/* 선택된 파일 유형에 따라 저장을 달리함 */
+			if (fileName.contains(".png") || fileName.contains(".PNG"))
+				ImageIO.write(b1, "png", file);
+			else
+				ImageIO.write(b1, "jpg", file);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return fileName;
 	}
 	/* repaint() 호출 시 실행되는 메소드 */
 	public void paint(Graphics g) {
