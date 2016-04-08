@@ -9,9 +9,11 @@ import java.util.Vector;
  * 4. 채우기 여부
  * */
 public class ShapeInfo {
+	
 	Vector<Point> point = new Vector<Point>();
 	Color color;	//선 색상
 	BasicStroke stroke;	//선 굵기
+	int strokeInt;
 	boolean fill;	//채우기 여부	true 채우기 / false 안채우기
 	public ShapeInfo () {
 		color = Color.BLACK;
@@ -37,10 +39,15 @@ public class ShapeInfo {
 	public void setStroke(int size) {
 		BasicStroke tmp = new BasicStroke(size);
 		this.stroke = tmp;
+		this.strokeInt = size;
 	}
 	/* 선 굵기 불러오기 */
 	public BasicStroke getStroke() {
 		return stroke;
+	}
+	/* 선 굵기 정수값 불러오기 */
+	public int getIntStroke() {
+		return strokeInt;
 	}
 	/* 사각형 객체 반환 : p1과 p2의 좌표 차이를 절대값으로 계산 후 반환 
 	 * 어디에 쓰나? 시작점보다 드래그/클릭해제된 점의 좌표가 적을 때, 안 그려지는 오류 처리

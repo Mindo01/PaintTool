@@ -16,9 +16,9 @@ public class MainPaint extends JFrame {
 	Container contentP;
 	JPanel mainP;
 	PaintPanel drawP;
-	String[] btnName = {"자유", "지우개", "선", "네모", "동글", "둥근네모"};
-	String[] path = {"draw_pencil.png", "draw_eraser.png", "draw_line.png", "draw_rectangle.png", "draw_oval.png", "draw_roundedrec.png"};
-	ImageButton[] Tbtn = new ImageButton[6];
+	String[] btnName = {"자유", "붓", "문자", "지우개", "선", "네모", "동글", "둥근네모", "세모", "오각형", "육각형", "별"};
+	String[] path = {"draw_pencil.png", "draw_brush.png", "draw_text.png", "draw_eraser.png", "draw_line.png", "draw_rectangle.png", "draw_oval.png", "draw_roundedrec.png", "draw_triangle.png", "draw_penta.png", "draw_hexa.png", "draw_star.png"};
+	ImageButton[] Tbtn = new ImageButton[12];
 	ButtonGroup bg = new ButtonGroup();	//토글 버튼들 묶어주는 버튼 그룹
 
 	/* 생성자 */
@@ -147,7 +147,7 @@ public class MainPaint extends JFrame {
 		leftP.setBackground(Color.LIGHT_GRAY);
 		leftP.setLayout(null);
 		/* 그리기 도구 버튼들 : 자유곡선, 지우개, 직선, 네모, 동그라미, 둥근네모 */
-		btnP.setLayout(new GridLayout(3, 2));
+		btnP.setLayout(new GridLayout(6, 2));
 		for (int i=0; i<btnName.length; i++)
 		{
 			Tbtn[i] = new ImageButton(path[i], i==0?true:false);	//기본 설정을 자유곡선으로
@@ -156,16 +156,16 @@ public class MainPaint extends JFrame {
 			btnP.add(Tbtn[i]);
 			bg.add(Tbtn[i]);
 		}
-		btnP.setSize(130, 195);
+		btnP.setSize(130, 390);
 		btnP.setLocation(15, 30);
 		/* 채우기 버튼 */
 		fillLabel.setSize(50, 50);
-		fillLabel.setLocation(54, 265);
+		fillLabel.setLocation(54, 430);
 		fillLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		//fill.setSelectedIcon(new ImageIcon("draw_fill.png"));
 		fill.setSelectedIcon(new ImageIcon(getClass().getClassLoader().getResource("draw_fills.png")));
 		fill.setSize(65, 65);
-		fill.setLocation(47, 300);
+		fill.setLocation(47, 465);
 		fill.addActionListener(new ActionListener() {		
 			@Override	/* 채우기 토글 여부 : true or false 페인트패널에 전달하기 위해 fill 필드 변경 */
 			public void actionPerformed(ActionEvent e) {

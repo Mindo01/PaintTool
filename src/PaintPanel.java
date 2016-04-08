@@ -20,11 +20,17 @@ public class PaintPanel extends JPanel {
 	int drawM = 1;	//그리기 모드	// 이거 또는 shape내의 type필드 둘 중 하나 선택하고 지우기 *******
 	/* 그리기 모드에 대응하는 상수들 */
 	final static int PENCIL = 1;	//자유 곡선
-	final static int ERASE = 2;		//지우기
-	final static int LINE = 3;		//직선
-	final static int REC = 4;		//네모
-	final static int OVAL = 5;		//원(타원)
-	final static int ROUNDREC = 6;	//둥근 네모
+	final static int BRUSH = 2;		//붓
+	final static int DASH = 3;		//점선
+	final static int ERASE = 4;		//지우기
+	final static int LINE = 5;		//직선
+	final static int REC = 6;		//네모
+	final static int OVAL = 7;		//원(타원)
+	final static int ROUNDREC = 8;	//둥근 네모
+	final static int TRI = 9;		//삼각형
+	final static int PENTA = 10;	//오각형
+	final static int HEXA = 11;		//육각형
+	final static int STAR = 12;		//별
 
 	public PaintPanel (String path) {
 		setBackground(Color.WHITE);
@@ -57,6 +63,14 @@ public class PaintPanel extends JPanel {
 					sp = shape.point.size() > 1 ? shape.point.get(shape.point.size() - 2) : shape.point.firstElement();
 					g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
 					break;
+				case BRUSH :
+					sp = shape.point.size() > 1 ? shape.point.get(shape.point.size() - 2) : shape.point.firstElement();
+					((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(), BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
+					g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
+					break;
+				case DASH :
+					float[] dash = new float[] { 10, 10, 10, 10 };
+					((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(), 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
 				case LINE : 
 					g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
 					break;
@@ -78,6 +92,19 @@ public class PaintPanel extends JPanel {
 					else
 						g1.fillRoundRect(rect.x, rect.y, rect.width, rect.height, 50, 50);
 					break;
+				case TRI :
+					drawTriangle(g1, sp, ep, rect, shape.fill);
+					break;
+				case PENTA :
+					drawPentagon(g1, sp, ep, rect, shape.fill);
+					break;
+				case HEXA :
+					drawHexagon(g1, sp, ep, rect, shape.fill);
+					break;
+				case STAR :
+					drawStar(g1, sp, ep, rect, shape.fill);
+					break;
+
 			}
 			repaint();
 			/* 저장된 포인트 모두 삭제 */
@@ -91,25 +118,35 @@ public class PaintPanel extends JPanel {
 			 * 자유곡선, 지우기는 드래그도 그대로 그림판에 입력
 			 * 나머지 기능은 드래그 과정은 그냥 보여주기만 (실질적 입력이 아님 - 지역 객체 g2 사용)
 			 */
-			if (drawM == PENCIL || drawM == ERASE)	// 자유곡선, 지우개일 때
+			if (drawM == PENCIL || drawM == BRUSH || drawM == ERASE )	// 자유곡선, 지우개일 때
 			{
 				((Graphics2D) g1).setStroke(shape.stroke);
 				g1.setColor(shape.getColor());
 				if (drawM == ERASE)
 					g1.setColor(Color.WHITE);
 				sp = shape.point.size() > 1 ? shape.point.get(shape.point.size() - 2) : shape.point.firstElement();
-				g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
-				
+				if (drawM == BRUSH)
+				{
+					((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(), BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
+					g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
+				}
+				else
+				{
+					g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
+				}
 				repaint();
 			}
 			else
 			{
 				Graphics g2 = getGraphics();
-				Rectangle rect = shape.getRect(sp, ep);;
+				Rectangle rect = shape.getRect(sp, ep);
 				((Graphics2D) g2).setStroke(shape.stroke);
 				g2.setColor(shape.getColor());
 				switch (drawM)
 				{
+					case DASH : 
+						float[] dash = new float[] { 10, 10, 10, 10 };
+						((Graphics2D) g2).setStroke(new BasicStroke(shape.getIntStroke(), 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
 					case LINE : 
 						g2.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
 						break;
@@ -131,6 +168,18 @@ public class PaintPanel extends JPanel {
 						else
 							g2.fillRoundRect(rect.x, rect.y, rect.width, rect.height, 50, 50);
 						break;
+					case TRI : 
+						drawTriangle(g2, sp, ep, rect, shape.fill);
+						break;
+					case PENTA :
+						drawPentagon(g2, sp, ep, rect, shape.fill);
+						break;
+					case HEXA :
+						drawHexagon(g2, sp, ep, rect, shape.fill);
+						break;
+					case STAR :
+						drawStar(g2, sp, ep, rect, shape.fill);
+						break;
 				}
 				getParent().repaint();
 			}
@@ -141,7 +190,97 @@ public class PaintPanel extends JPanel {
 		public void mouseEntered(MouseEvent e) {}
 		public void mouseExited(MouseEvent e) {}
 	}
-
+	/* TRI : triangle : 삼각형 그리는 메소드 */
+	public void drawTriangle(Graphics g, Point sp, Point ep, Rectangle rect, boolean fill) {
+		int r = rect.width;
+		int[] x = new int[3];
+		int[] y = new int[3];
+		x[0] = (sp.x + ep.x)/2;
+		y[0] = sp.y;
+		x[1] = sp.x;
+		y[1] = ep.y;
+		x[2] = ep.x;
+		y[2] = ep.y;
+		/* 도형 채우기 여부 */
+		if (fill == false)
+			g.drawPolygon(x, y, x.length);
+		else
+			g.fillPolygon(x, y, x.length);
+	}
+	/* PENTA : pentagon : 오각형 그리는 메소드 */
+	public void drawPentagon(Graphics g, Point sp, Point ep, Rectangle rect, boolean fill) {
+		int r = rect.width;
+		int[] x = new int[5];
+		int[] y = new int[5];
+		for (int i = 0; i < 5; i++) {
+			x[i] = (int) (r * Math.cos(i * 2 * Math.PI / 5));
+			y[i] = (int) (r * Math.sin(i * 2 * Math.PI / 5));
+		}
+		/* 기준 점을 드래그하는 점과 점 사이의 중간점으로 설정 */
+		int standX = (sp.x + ep.x)/2;
+		int standY = (sp.y + ep.y)/2;
+		g.translate(standX, standY);
+		/* 도형 채우기 여부 */
+		if (fill == false)
+			g.drawPolygon(x, y, x.length);
+		else
+			g.fillPolygon(x, y, x.length);
+		g.translate(-standX, -standY);
+	}
+	/* HEXA : hexagon : 육각형 그리는 메소드 */
+	public void drawHexagon(Graphics g, Point sp, Point ep, Rectangle rect, boolean fill) {
+		int r = rect.width;
+		int[] x = new int[6];
+		int[] y = new int[6];
+		boolean updown = false;
+		/* 1. 각 포인트의 y값 좌표가 반전될 때 처리 : 드래그 시작점보다 끝점 y좌표값이 더 작을 때 */
+		if (sp.y > ep.y)
+			updown = true;
+		else
+			updown = false;
+		x[0] = (sp.x + ep.x)/2;
+		y[0] = sp.y;
+		x[1] = sp.x;
+		/* 위 주석 1번과 같은 경우, 시작점 y좌표에서 빼주는 식으로 변경. y[2], y[4], y[5] 모두 유사하게 처리 */
+		y[1] = updown==false?sp.y + Math.abs(ep.y - sp.y)/4:sp.y - Math.abs(ep.y - sp.y)/4;
+		x[2] = sp.x;
+		y[2] = updown==false?sp.y + Math.abs(ep.y - sp.y)/4*3:sp.y - Math.abs(ep.y - sp.y)/4*3;
+		x[3] = (sp.x + ep.x)/2;
+		y[3] = ep.y;
+		x[4] = ep.x;
+		y[4] = updown==false?sp.y + Math.abs(ep.y - sp.y)/4*3:sp.y - Math.abs(ep.y - sp.y)/4*3;
+		x[5] = ep.x;
+		y[5] = updown==false?sp.y + Math.abs(ep.y - sp.y)/4:sp.y - Math.abs(ep.y - sp.y)/4;
+		/* 도형 채우기 여부 */
+		if (fill == false)
+			g.drawPolygon(x, y, x.length);
+		else
+			g.fillPolygon(x, y, x.length);
+	}
+	/* STAR : star : 별 모양 그리는 메소드 */
+	public void drawStar(Graphics g, Point sp, Point ep, Rectangle rect, boolean fill) {
+		int r = rect.width;
+		int[] x = new int[10];
+		int[] y = new int[10];
+		int cx = r;
+		int cy = rect.height;
+		int r1 = Math.min(cx, cy) - 10;
+		int r2 = Math.min(cx, cy) / 2;
+		for (int i = 0; i < 10; i++)
+		{
+			x[i] = cx + (int)(r1 * Math.cos(i * Math.PI / 5 - Math.PI / 2));
+			y[i] = cy + (int)(r1 * Math.sin(i * Math.PI / 5 - Math.PI / 2));
+			i++;
+			x[i] = cx + (int)(r2 * Math.cos((i+1) * Math.PI / 5 - Math.PI / 2));
+			y[i] = cy + (int)(r2 * Math.sin((i+1) * Math.PI / 5 - Math.PI / 2));
+		}
+		/* 기준 점을 드래그하는 점과 점 사이의 중간점으로 설정 */
+		g.translate(sp.x, sp.y);
+		g.drawPolygon(x, y, x.length);
+		g.translate(-sp.x, -sp.y);
+	}
+	
+	
 	/* 그림판 새로 시작하기 */
 	public void init(String path) {
 		g1.setColor(Color.WHITE);
