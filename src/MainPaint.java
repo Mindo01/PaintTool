@@ -16,11 +16,12 @@ public class MainPaint extends JFrame {
 	Container contentP;
 	JPanel mainP;
 	PaintPanel drawP;
-	String[] btnName = {"자유", "붓", "문자", "지우개", "선", "네모", "동글", "둥근네모", "세모", "오각형", "육각형", "별"};
-	String[] path = {"draw_pencil.png", "draw_brush.png", "draw_text.png", "draw_eraser.png", "draw_line.png", "draw_rectangle.png", "draw_oval.png", "draw_roundedrec.png", "draw_triangle.png", "draw_penta.png", "draw_hexa.png", "draw_star.png"};
+	String[] btnName = {"자유", "붓", "점선", "지우개", "선", "네모", "동글", "둥근네모", "세모", "오각형", "육각형", "별"};
+	String[] path = {"draw_pencil.png", "draw_brush.png", "draw_dash.png", "draw_eraser.png", "draw_line.png", "draw_rectangle.png", "draw_oval.png", "draw_roundedrec.png", "draw_triangle.png", "draw_penta.png", "draw_hexa.png", "draw_star.png"};
 	ImageButton[] Tbtn = new ImageButton[12];
 	ButtonGroup bg = new ButtonGroup();	//토글 버튼들 묶어주는 버튼 그룹
-
+	String[] strSize = {"선 굵기 1", "선 굵기 5", "선 굵기 10", "선 굵기 25", "선 굵기 40", "선 굵기 60"};
+	int[] strValue = {1, 5, 10, 25, 40, 60};
 	/* 생성자 */
 	public MainPaint() {
 		setTitle("민주 그림판 - 제목 없음.png");
@@ -37,7 +38,7 @@ public class MainPaint extends JFrame {
 		/* 사이드 메뉴 생성 */
 		leftPanel();
 		/* 툴바 메뉴 생성 */
-		colorPanel();
+		toolBarPanel();
 		/* paintPanel 추가 : 실질적으로 그림 그리는 공간 */
 		mainP.add(drawP, BorderLayout.CENTER);
 		contentP.add(mainP, BorderLayout.CENTER);
@@ -178,14 +179,17 @@ public class MainPaint extends JFrame {
 		leftP.add(fill);
 		mainP.add(leftP, BorderLayout.WEST);
 	}
-	/* 색상 선택 툴바 */
-	void colorPanel() {
+	/* 툴바 : 새로만들기, 색상 선택, 선 굵기 조절 등. */
+	void toolBarPanel() {
 		JToolBar bar = new JToolBar("ColorMenu");
 		JButton newBtn = new JButton("New");
+		JButton moreColor = new JButton(new ImageIcon(getClass().getClassLoader().getResource("draw_colors.png")));
 		NowColorPalette nowColor = new NowColorPalette("현재 색");
 		ColorPalette colorP = new ColorPalette();
+		JComboBox strokeValue = new JComboBox();
 		bar.setLayout(null);
 		bar.setPreferredSize(new Dimension(800, 90));
+		/* 1. 새로 만들기 버튼 : 그리는 패널 초기화*/
 		newBtn.setSize(60, 60);
 		newBtn.setLocation(20, 15); // 인자 : --, |
 		newBtn.addActionListener(new ActionListener() {			
@@ -194,10 +198,28 @@ public class MainPaint extends JFrame {
 				drawP.init(null);
 			}
 		});
+		/* . 선 굵기 설정 */
+		strokeValue.setSize(100, 35);
+		strokeValue.setLocation(100, 27);
+		for (int i = 0; i < strSize.length; i++)
+			strokeValue.addItem(strSize[i]);
+		strokeValue.addActionListener(new ActionListener() {		
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JComboBox cb = (JComboBox)e.getSource();
+				String item = (String)cb.getSelectedItem();
+				for (int i = 0; i < strSize.length; i++)
+					if (item.equals(strSize[i]))
+							drawP.shape.setStroke(strValue[i]);
+				System.out.println("stroke : "+drawP.shape.getIntStroke());
+			}
+		});
+		/* 2. 현재 색상을 보여주는 라벨 */
 		nowColor.setSize(60, 60);
-		nowColor.setLocation(90, 15);
+		nowColor.setLocation(220, 15);
+		/* 3. 기본 색상표 10개 : 패널 (ColorPalette 클래스의 객체) */
 		colorP.setSize(240, 60);
-		colorP.setLocation(170, 15);
+		colorP.setLocation(300, 15);
 		for (int i = 0; i < colorP.paletBtn.length; i++)
 		{
 			colorP.paletBtn[i].addMouseListener(new MouseAdapter() {
@@ -209,11 +231,28 @@ public class MainPaint extends JFrame {
 				}
 			});
 		}
+		/* 4. JColorChooser이용해 다양한 색상을 사용자 설정 가능한 버튼 */
+		moreColor.setSize(50, 50);
+		moreColor.setLocation(560, 20);
+		moreColor.addActionListener(new ActionListener() {	
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JColorChooser chooser = new JColorChooser();
+				Color selectedColor = chooser.showDialog(null, "색상 선택", drawP.shape.getColor());
+				if (selectedColor == null)
+					return ;
+				nowColor.setColor(selectedColor);
+				drawP.shape.setColor(selectedColor);
+			}
+		});
+		
 		bar.add(newBtn);
 		bar.addSeparator();
-		bar.add(nowColor);
+		bar.add(strokeValue);
 		bar.addSeparator();
+		bar.add(nowColor);
 		bar.add(colorP);
+		bar.add(moreColor);
 		mainP.add(bar, BorderLayout.NORTH);
 	}
 	/* 그리기 도형 선택 버튼에 대한 리스너 */

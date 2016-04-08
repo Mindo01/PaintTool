@@ -37,7 +37,7 @@ public class PaintPanel extends JPanel {
 		g1.fillRect(0, 0, 1000, 800);
 		g1.drawImage(new ImageIcon(path).getImage(), 0, 0, null);
 		/* 기본 선 굵기 설정 */
-		shape.setStroke(5);
+		shape.setStroke(1);
 		addMouseListener( new PaintListener());
 		addMouseMotionListener( new PaintListener());
 	}
@@ -52,12 +52,14 @@ public class PaintPanel extends JPanel {
 			shape.add(e.getPoint());
 			Point sp = shape.get().firstElement();
 			Point ep = shape.get().lastElement();
-			((Graphics2D) g1).setStroke(shape.getStroke());
 			g1.setColor(shape.getColor());
 			Rectangle rect = shape.getRect(sp, ep);
 			switch (drawM)
 			{
 				case ERASE :
+					/* 지우개는 굵기의 최저값이 10이도록 설정 */
+					if (shape.getIntStroke() < 10)
+						((Graphics2D) g1).setStroke(new BasicStroke(10));
 					g1.setColor(Color.WHITE);
 				case PENCIL :
 					sp = shape.point.size() > 1 ? shape.point.get(shape.point.size() - 2) : shape.point.firstElement();
@@ -337,7 +339,6 @@ public class PaintPanel extends JPanel {
 		else
 			/* 아무 확장자도 입력안 할 때, 기본 확장자는 .png로 자동 설정 */
 			file = new File(chooser.getSelectedFile() + ".png");
-		
 		/* 이미 존재하는 파일일 경우 */
 		if (file.isFile())
 		{
@@ -360,7 +361,7 @@ public class PaintPanel extends JPanel {
 		}
 		
 		thisPath = file.getPath();
-		return fileName;
+		return file.getName();
 	}
 	public String save() {
 		/* 제목없음.png의 상태. 아직 저장한 적이 없는 파일일 경우, '다음이름으로 저장'하는 단계로 보낸다 */
