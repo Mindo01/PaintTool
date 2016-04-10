@@ -3,7 +3,6 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Vector;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -20,15 +19,21 @@ import javax.swing.filechooser.FileNameExtensionFilter;
  * 		PENCIL BRUSH DASH ERASE LINE REC OVAL ROUNDREC TRI PENTA HEXA STAR
  * */
 public class PaintPanel extends JPanel {
+	/* 버퍼 이미지 객체 2개 
+	 * - b1 : 실질적으로 그리는 영역의 버퍼이미지
+	 * - b2 : copy, cut, paste 에 사용할 임시 저장 버퍼이미지 
+	 * 이에 대응하는 두 그래픽 객체 : g1, g2 */
 	private BufferedImage b1 = new BufferedImage(1000, 800, BufferedImage.TYPE_3BYTE_BGR);
 	private BufferedImage b2 = new BufferedImage(1000, 800, BufferedImage.TYPE_3BYTE_BGR);
 	private Graphics g1 = b1.getGraphics(); // 실제 그려지는 영역
 	private Graphics g2 = b2.getGraphics(); // 복사 해놓는 영역
+	/* 현재 파일의 경로를 저장하는 변수 */
 	String thisPath = null;
-	ShapeInfo shape;
+	ShapeInfo shape;		// shape 도형의 정보를 저장하는 클래스의 객체
 	Rectangle selectArea;	// 선택 영역 저장하는 네모
-	Color bgColor;			//배경색 저장
-	int drawM = 1;			//그리기 모드	// 이거 또는 shape내의 type필드 둘 중 하나 선택하고 지우기 *******
+	Color bgColor;			// 배경색 저장
+	int drawM = 1;			// 그리기 모드
+	boolean changedFile = false;	//변경사항 여부에 대해 저장
 	/* 그리기 모드에 대응하는 상수들 */
 	final static int SELECT = 0;	//선택모드
 	final static int PENCIL = 1;	//자유 곡선
@@ -55,28 +60,30 @@ public class PaintPanel extends JPanel {
 		shape = new ShapeInfo();
 		/* 선택 영역을 보여주는 사각형 객체 생성 */
 		selectArea = new Rectangle(-1, 0, 0, 0);
+		/* PaintPanel 진입하면, 마우스 커서 모양 변경 */
+		setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
 		addMouseListener( new PaintListener());
 		addMouseMotionListener( new PaintListener());
 	}
 	
-	/* 선택된 영역을 복사해 두는 메소드
+	/** 선택된 영역을 복사해 두는 메소드
 	 */
 	public void copy() {
-		g2.drawImage(b1, 0, 0, 1120, 840, selectArea.x, selectArea.y, selectArea.x + selectArea.width, selectArea.y + selectArea.height, null);
+		g2.drawImage(b1, 0, 0, 1000, 800, selectArea.x, selectArea.y, selectArea.x + selectArea.width, selectArea.y + selectArea.height, null);
 	}
 
-	/* 선택한 영역에 복사한거나 잘라낸것을 붙이는 메소드, 선택영역을 크게 드래그하면 확대해서, 작게하면 축소해서, 같게하면 똑같게
+	/** 선택한 영역에 복사한거나 잘라낸것을 붙이는 메소드, 선택영역을 크게 드래그하면 확대해서, 작게하면 축소해서, 같게하면 똑같게
 	 * 붙여넣어짐
 	 * */
 	public void paste() {
-		g1.drawImage(b2, selectArea.x, selectArea.y, selectArea.x + selectArea.width, selectArea.y + selectArea.height, 0, 0, 1120, 840, null);
+		g1.drawImage(b2, selectArea.x, selectArea.y, selectArea.x + selectArea.width, selectArea.y + selectArea.height, 0, 0, 1000, 800, null);
 		repaint();
 	}
 
-	/* 선택한 영역을 잘라내는 메소드(잘라진 영역은 흰색으로 변함)
+	/** 선택한 영역을 잘라내는 메소드(잘라진 영역은 흰색으로 변함)
 	 */
 	public void cut() {
-		g2.drawImage(b1, 0, 0, 1120, 840, selectArea.x, selectArea.y, selectArea.x + selectArea.width, selectArea.y + selectArea.height, null);
+		g2.drawImage(b1, 0, 0, 1000, 800, selectArea.x, selectArea.y, selectArea.x + selectArea.width, selectArea.y + selectArea.height, null);
 		g1.setColor(Color.white);
 		g1.fillRect(selectArea.x, selectArea.y, selectArea.width, selectArea.height);
 		repaint();
@@ -100,6 +107,7 @@ public class PaintPanel extends JPanel {
 			shape.add(e.getPoint());
 			((Graphics2D)g1).setStroke(shape.getStroke(drawM));	// 선 굵기 설정
 			g1.setColor(shape.getColor());					// 선 색 / 채우기 색 설정
+			changedFile = true;
 		}
 		/* 2. 마우스 클릭이 해제됐을 때의 이벤트
 		 * 도형 그리기는 이 때 실질적으로 패널에 그려짐 (g1 사용) */
@@ -109,8 +117,16 @@ public class PaintPanel extends JPanel {
 				return ;
 			if (drawM == SPOID)
 			{
-				MainPaint.nowColor.setColor(MainPaint.spoidBtn.getBackground());
-				shape.setColor(MainPaint.spoidBtn.getBackground());
+				if (e.isMetaDown() == false) //왼쪽 클릭
+				{
+					MainPaint.nowColor.setColor(MainPaint.spoidBtn.getBackground());
+					shape.setColor(MainPaint.spoidBtn.getBackground());
+				}
+				else
+				{
+					MainPaint.backColor.setColor(MainPaint.spoidBtn.getBackground());
+					bgColor = MainPaint.spoidBtn.getBackground();
+				}
 				return ;
 			}
 			// 포인트 shape 객체 내 벡터에 저장 (끝점 저장)
@@ -121,11 +137,8 @@ public class PaintPanel extends JPanel {
 			Rectangle rect = shape.getRect(sp, ep);
 			switch (drawM)
 			{
-				case SELECT :
-					
-				break;
 				case ERASE :
-					g1.setColor(Color.WHITE);
+					g1.setColor(bgColor);
 				case PENCIL :
 					sp = shape.point.size() > 1 ? shape.point.get(shape.point.size() - 2) : shape.point.firstElement();
 					g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
@@ -208,7 +221,7 @@ public class PaintPanel extends JPanel {
 				((Graphics2D) g1).setStroke(shape.stroke);
 				if (drawM == ERASE)
 				{
-					g1.setColor(Color.WHITE);
+					g1.setColor(bgColor);
 					/* 지우개는 굵기의 최저값이 10이도록 설정 */
 					if (shape.getIntStroke(drawM) < 10)
 					{
@@ -297,7 +310,7 @@ public class PaintPanel extends JPanel {
 		public void mouseEntered(MouseEvent e) {}
 		public void mouseExited(MouseEvent e) {}
 	}
-	/* 선 유형 설정해주는 메소드 */
+	/** 선 유형 설정해주는 메소드 */
 	public void setStrokeType(Graphics g, int type)
 	{
 		switch (type)
@@ -313,7 +326,7 @@ public class PaintPanel extends JPanel {
 				break;
 		}
 	}
-	/* TRI : triangle : 삼각형 그리는 메소드 */
+	/** TRI : triangle : 삼각형 그리는 메소드 */
 	public void drawTriangle(Graphics g, Point sp, Point ep, Rectangle rect, boolean fill) {
 		int r = rect.width;
 		int[] x = new int[3];
@@ -330,7 +343,7 @@ public class PaintPanel extends JPanel {
 		else
 			g.fillPolygon(x, y, x.length);
 	}
-	/* PENTA : pentagon : 오각형 그리는 메소드 */
+	/** PENTA : pentagon : 오각형 그리는 메소드 */
 	public void drawPentagon(Graphics g, Point sp, Point ep, Rectangle rect, boolean fill) {
 		int r = rect.width;
 		int[] x = {sp.x, ((ep.x - (sp.x+ep.x)/2)/2+ep.x+sp.x)/2, (ep.x - (sp.x + ep.x)/2)/2+ep.x, ep.x, ((sp.x+ep.x)/2-sp.x)/2+sp.x };
@@ -346,7 +359,7 @@ public class PaintPanel extends JPanel {
 			g.fillPolygon(x, y, x.length);
 		//g.translate(-standX, -standY);
 	}
-	/* HEXA : hexagon : 육각형 그리는 메소드 */
+	/** HEXA : hexagon : 육각형 그리는 메소드 */
 	public void drawHexagon(Graphics g, Point sp, Point ep, Rectangle rect, boolean fill) {
 		int r = rect.width;
 		int[] x = new int[6];
@@ -376,7 +389,7 @@ public class PaintPanel extends JPanel {
 		else
 			g.fillPolygon(x, y, x.length);
 	}
-	/* STAR : star : 별 모양 그리는 메소드 */
+	/** STAR : star : 별 모양 그리는 메소드 */
 	public void drawStar(Graphics g, Point sp, Point ep, Rectangle rect, boolean fill) {
 		int r = rect.width;
 		int[] x = new int[10];
@@ -400,16 +413,35 @@ public class PaintPanel extends JPanel {
 	}
 	
 	
-	/* 그림판 새로 시작하기 */
+	/** 그림판 새로 시작하기 */
 	public void init(String path) {
-		/* 변경 사항 저장할 건지 물어보기 */
-		//TODO 
+		if (changedFile == true)
+		{
+			/* 변경 사항 저장할 건지 물어보기 */
+			JLabel message = new JLabel();
+			message.setText("변경 사항을 저장하시겠습니까?");
+			int ret = JOptionPane.showConfirmDialog(null, message, "확인", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+			/* 1. 저장 YES(확인) 누를 경우 */
+			if (ret == JOptionPane.YES_OPTION)	
+			{
+				String str = saveAs();
+				if (str == null)
+					return ;
+			}
+			/* 2. 저장 CANCEL(취소) 또는 창 종료 버튼 누를 경우 */
+			if (ret == JOptionPane.CANCEL_OPTION || ret == JOptionPane.CLOSED_OPTION)
+			{
+				return ;
+			}
+		}
 		g1.setColor(Color.WHITE);
 		g1.fillRect(0, 0, 1000, 800);
 		g1.drawImage(new ImageIcon(path).getImage(), 0, 0, null);
 		repaint();
+		// 변경내용 플래그 다시 원래대로
+		changedFile = false;
 	}
-	/* 열기 다이얼로그 출력하고 파일 이름 불러오는 메소드 */
+	/** 열기 다이얼로그 출력하고 파일 이름 불러오는 메소드 */
 	public String open() {
 		/* JFileChooser 객체 생성 */
 		JFileChooser chooser = new JFileChooser();
@@ -431,11 +463,12 @@ public class PaintPanel extends JPanel {
 		String fileName = chooser.getSelectedFile().getName();
 		/* 열기 선택한 파일을 가져와 그림 패널 초기화 */
 		init(pathName);
+		thisPath = pathName;
 		/* 파일 이름으로 타이틀 설정 */
 		return fileName;
 		
 	}
-	/* 저장 다이얼로그 출력하고 파일 이름 불러오는 메소드 */
+	/** 저장 다이얼로그 출력하고 파일 이름 불러오는 메소드 */
 	public String saveAs() {
 		/* JFileChooser 객체 생성 */
 		JFileChooser chooser = new JFileChooser();
@@ -483,6 +516,7 @@ public class PaintPanel extends JPanel {
 		thisPath = file.getPath();
 		return file.getName();
 	}
+	/** 이미지 파일로 저장하는 메소드 */
 	public String save() {
 		/* 제목없음.png의 상태. 아직 저장한 적이 없는 파일일 경우, '다음이름으로 저장'하는 단계로 보낸다 */
 		if (thisPath == null)

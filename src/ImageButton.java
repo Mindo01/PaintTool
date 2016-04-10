@@ -1,4 +1,3 @@
-import java.awt.*;
 import javax.swing.*;
 
 /** 이미지 버튼 클래스 : 이미지 아이콘 등록 시, jar파일 생성 후에도 구동되도록 생성자에서 설정 
@@ -10,6 +9,7 @@ class ImageButton extends JToggleButton {
 
   public ImageButton(String path, boolean flag) {
 	  super(new ImageIcon(path), flag);
+	  /* jar 파일에 포함되도록 설정 */
 	  setIcon(new ImageIcon(getClass().getClassLoader().getResource(path)));
   }
 

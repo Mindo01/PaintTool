@@ -1,12 +1,5 @@
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.net.URL;
-
+import java.awt.event.*;
 import javax.swing.*;
 
 /**
@@ -30,6 +23,7 @@ public class MainPaint extends JFrame {
 	int[] strValue = {1, 5, 10, 25, 40, 60};
 	static JComboBox strokeValue;
 	static NowColorPalette nowColor;
+	static NowColorPalette backColor;
 	static ImageButton spoidBtn;
 	/* 생성자 */
 	public MainPaint() {
@@ -60,7 +54,7 @@ public class MainPaint extends JFrame {
 		setSize(1100, 830);
 		setVisible(true);
 	}
-	
+	/* 위쪽에 위치한 메뉴 생성하는 메소드 */
 	void createMenu() {
 		/* 메뉴, 메뉴바, 메뉴아이템 */
 		JMenuBar mb;
@@ -73,9 +67,9 @@ public class MainPaint extends JFrame {
 		mb.setPreferredSize(new Dimension(320, 45));
 		mb.setLocation(0, 0);
 		mb.setBackground(Color.DARK_GRAY);
-		fileMenu = new JMenu("파일");	// 파일 메뉴
-		editMenu = new JMenu("도구");	// 편집 메뉴
-		nameMenu = new JMenu("도움");	// 기타 메뉴
+		fileMenu = new JMenu("  파일");	// 파일 메뉴
+		editMenu = new JMenu("  도구");	// 편집 메뉴
+		nameMenu = new JMenu("  도움");	// 기타 메뉴
 		fileMenu.setForeground(Color.WHITE);
 		fileMenu.setPreferredSize(new Dimension(50, 45));
 		editMenu.setForeground(Color.WHITE);
@@ -113,6 +107,7 @@ public class MainPaint extends JFrame {
 				// 다이얼로그.... 추가하기
 				/* PaintPanel 클래스 내의 init() 메소드를 호출 */
 				drawP.init(null);
+				setTitle("민주 그림판 - 제목 없음.png");
 			}
 		});
 		save.addActionListener(new ActionListener() {		
@@ -121,8 +116,7 @@ public class MainPaint extends JFrame {
 				String title = drawP.save();
 				/* 타이틀에 방금 저장한 파일 이름 띄우기 */
 				if (title == null)
-					title = "제목 없음.png";
-				setTitle("민주 그림판 - "+title);
+					setTitle("민주 그림판 - "+title);
 			}
 		});
 		saveAs.addActionListener(new ActionListener() {		
@@ -130,9 +124,8 @@ public class MainPaint extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				String title = drawP.saveAs();
 				/* 타이틀에 방금 저장한 파일 이름 띄우기 */
-				if (title == null)
-					title = "제목 없음.png";
-				setTitle("민주 그림판 - "+title);
+				if (title != null)
+					setTitle("민주 그림판 - "+title);
 			}
 		});
 		open.addActionListener(new ActionListener() {		
@@ -198,7 +191,7 @@ public class MainPaint extends JFrame {
 		// 컨탠트 팬에 메뉴 바 등록
 		contentP.add(mb, BorderLayout.NORTH);
 	}
-	/* 왼쪽 메뉴 */
+	/* 왼쪽 메뉴 패널 구성 */
 	void leftPanel() {
 		/* 왼쪽 메뉴 패널 */
 		JPanel leftP = new JPanel();
@@ -241,12 +234,13 @@ public class MainPaint extends JFrame {
 		leftP.add(fill);
 		mainP.add(leftP, BorderLayout.WEST);
 	}
-	/* 툴바 : 새로만들기, 색상 선택, 선 굵기 조절 등. */
+	/* 메뉴 아래에 붙어있는 툴바 구성 : 새로만들기, 색상 선택, 선 굵기 조절 등. */
 	void toolBarPanel() {
 		JToolBar bar = new JToolBar("ColorMenu");
 		JButton newBtn = new JButton("New");
 		JButton moreColor = new JButton(new ImageIcon(getClass().getClassLoader().getResource("draw_colors.png")));
-		nowColor = new NowColorPalette("현재 색");
+		nowColor = new NowColorPalette("현재 색", Color.BLACK);
+		backColor = new NowColorPalette("배경 색", Color.WHITE);
 		ColorPalette colorP = new ColorPalette();
 		strokeValue = new JComboBox();
 		JComboBox strokeType = new JComboBox();
@@ -262,10 +256,11 @@ public class MainPaint extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				drawP.init(null);
+				setTitle("민주 그림판 - 제목 없음.png");
 			}
 		});
 		/* 1. 선 굵기 설정 */
-		strokeValue.setSize(100, 35);
+		strokeValue.setSize(90, 35);
 		strokeValue.setLocation(100, 27);
 		for (int i = 0; i < strSize.length; i++)
 			strokeValue.addItem(strSize[i]);
@@ -281,8 +276,8 @@ public class MainPaint extends JFrame {
 			}
 		});
 		/* 2. 선 유형 설정 */
-		strokeType.setSize(100, 35);
-		strokeType.setLocation(220, 27);
+		strokeType.setSize(70, 35);
+		strokeType.setLocation(200, 27);
 		for (int i = 0; i < strType.length; i++)
 			strokeType.addItem(strType[i]);
 		strokeType.addActionListener(new ActionListener() {
@@ -297,25 +292,37 @@ public class MainPaint extends JFrame {
 			}
 		});
 		/* 3. 현재 색상을 보여주는 라벨 */
-		nowColor.setSize(60, 60);
-		nowColor.setLocation(340, 15);
+		nowColor.setSize(45, 60);
+		nowColor.setLocation(290, 11);
+		/* 3. 배경 색상을 보여주는 라벨 */
+		backColor.setSize(45, 60);
+		backColor.setLocation(345, 11);
 		/* 4. 기본 색상표 10개 : 패널 (ColorPalette 클래스의 객체) */
 		colorP.setSize(240, 60);
-		colorP.setLocation(420, 15);
+		colorP.setLocation(410, 15);
 		for (int i = 0; i < colorP.paletBtn.length; i++)
 		{
 			colorP.paletBtn[i].addMouseListener(new MouseAdapter() {
 				@Override
 				public void mouseClicked(MouseEvent e) {
 					JButton btn = (JButton)e.getSource();
-					nowColor.setColor(btn.getBackground());
-					drawP.shape.setColor(btn.getBackground());
+					if (e.isMetaDown() == false)	// 왼쪽 마우스 클릭
+					{
+						colorP.color = btn.getBackground();
+						nowColor.setColor(colorP.color);
+						drawP.shape.setColor(colorP.color);
+					}
+					else	// 오른쪽 마우스 클릭
+					{
+						drawP.bgColor = btn.getBackground();
+						backColor.setColor(drawP.bgColor);
+					}
 				}
 			});
 		}
 		/* 5. JColorChooser이용해 다양한 색상을 사용자 설정 가능한 버튼 */
 		moreColor.setSize(50, 50);
-		moreColor.setLocation(680, 20);
+		moreColor.setLocation(670, 20);
 		moreColor.addActionListener(new ActionListener() {	
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -329,7 +336,7 @@ public class MainPaint extends JFrame {
 		});
 		/* 6. 스포이드 구현 : 마우스를 올려놓은 컴포넌트의 색상을 반환해 설정해주는 기능 */
 		spoidBtn.setSize(50, 50);
-		spoidBtn.setLocation(750, 20);
+		spoidBtn.setLocation(730, 20);
 		spoidBtn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -350,6 +357,7 @@ public class MainPaint extends JFrame {
 		bar.add(strokeType);
 		bar.addSeparator();
 		bar.add(nowColor);
+		bar.add(backColor);
 		bar.add(colorP);
 		bar.add(moreColor);
 		bar.add(spoidBtn);
@@ -380,9 +388,7 @@ public class MainPaint extends JFrame {
 		public void mouseEntered(MouseEvent e) { }
 		public void mouseExited(MouseEvent e) {	}
 	}
-	
-	
-	
+
 	/* 메인 : 프레임 생성 및 창 생성! */
 	public static void main(String[] args) {
 		new MainPaint();
