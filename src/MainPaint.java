@@ -9,7 +9,7 @@ import java.net.URL;
 
 import javax.swing.*;
 
-/*
+/**
  * 메인 프로그램 : JFrame 상속
  * UI 디자인이 실질적으로 이루어지고, 프레임이 생성되는 클래스
  * 1. 프레임 생성 및 컴포넌트 부착
@@ -29,6 +29,8 @@ public class MainPaint extends JFrame {
 	String[] strType = {"실선", "점선"};
 	int[] strValue = {1, 5, 10, 25, 40, 60};
 	static JComboBox strokeValue;
+	static NowColorPalette nowColor;
+	static ImageButton spoidBtn;
 	/* 생성자 */
 	public MainPaint() {
 		setTitle("민주 그림판 - 제목 없음.png");
@@ -72,7 +74,7 @@ public class MainPaint extends JFrame {
 		mb.setLocation(0, 0);
 		mb.setBackground(Color.DARK_GRAY);
 		fileMenu = new JMenu("파일");	// 파일 메뉴
-		editMenu = new JMenu("편집");	// 편집 메뉴
+		editMenu = new JMenu("도구");	// 편집 메뉴
 		nameMenu = new JMenu("도움");	// 기타 메뉴
 		fileMenu.setForeground(Color.WHITE);
 		fileMenu.setPreferredSize(new Dimension(50, 45));
@@ -91,12 +93,12 @@ public class MainPaint extends JFrame {
 		save.setAccelerator(KeyStroke.getKeyStroke('S', InputEvent.CTRL_MASK));
 		saveAs.setAccelerator(KeyStroke.getKeyStroke('S', InputEvent.SHIFT_MASK + InputEvent.CTRL_MASK));
 		open.setAccelerator(KeyStroke.getKeyStroke('G', InputEvent.CTRL_MASK));
-		// 편집 하위 아이템
+		// 도구 하위 아이템
 		select = new JMenuItem("선택");
 		copy = new JMenuItem("복사");
 		cut = new JMenuItem("자르기");
 		paste = new JMenuItem("붙여넣기");
-		// 편집 하위 아이템 단축키 설정
+		// 도구 하위 아이템 단축키 설정
 		select.setAccelerator(KeyStroke.getKeyStroke("S"));
 		copy.setAccelerator(KeyStroke.getKeyStroke('C', InputEvent.CTRL_MASK));
 		cut.setAccelerator(KeyStroke.getKeyStroke('X', InputEvent.CTRL_MASK));
@@ -144,7 +146,7 @@ public class MainPaint extends JFrame {
 				
 			}
 		});
-		/* 편집 메뉴 아이템들 리스너 등록 */
+		/* 도구 메뉴 아이템들 리스너 등록 */
 		select.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -244,10 +246,11 @@ public class MainPaint extends JFrame {
 		JToolBar bar = new JToolBar("ColorMenu");
 		JButton newBtn = new JButton("New");
 		JButton moreColor = new JButton(new ImageIcon(getClass().getClassLoader().getResource("draw_colors.png")));
-		NowColorPalette nowColor = new NowColorPalette("현재 색");
+		nowColor = new NowColorPalette("현재 색");
 		ColorPalette colorP = new ColorPalette();
 		strokeValue = new JComboBox();
 		JComboBox strokeType = new JComboBox();
+		spoidBtn = new ImageButton("draw_spoid.png", false);
 		
 		/* 0. 배치관리자 제거 후, 툴바 내에 컴포넌트 절대 위치에 배치하기 */
 		bar.setLayout(null);
@@ -261,7 +264,7 @@ public class MainPaint extends JFrame {
 				drawP.init(null);
 			}
 		});
-		/* . 선 굵기 설정 */
+		/* 1. 선 굵기 설정 */
 		strokeValue.setSize(100, 35);
 		strokeValue.setLocation(100, 27);
 		for (int i = 0; i < strSize.length; i++)
@@ -277,7 +280,7 @@ public class MainPaint extends JFrame {
 				System.out.println("stroke : "+drawP.shape.getIntStroke(drawP.drawM));
 			}
 		});
-		/* . 선 유형 설정 */
+		/* 2. 선 유형 설정 */
 		strokeType.setSize(100, 35);
 		strokeType.setLocation(220, 27);
 		for (int i = 0; i < strType.length; i++)
@@ -293,10 +296,10 @@ public class MainPaint extends JFrame {
 				System.out.println("stroke : "+drawP.shape.getStrokeType());
 			}
 		});
-		/* 2. 현재 색상을 보여주는 라벨 */
+		/* 3. 현재 색상을 보여주는 라벨 */
 		nowColor.setSize(60, 60);
 		nowColor.setLocation(340, 15);
-		/* 3. 기본 색상표 10개 : 패널 (ColorPalette 클래스의 객체) */
+		/* 4. 기본 색상표 10개 : 패널 (ColorPalette 클래스의 객체) */
 		colorP.setSize(240, 60);
 		colorP.setLocation(420, 15);
 		for (int i = 0; i < colorP.paletBtn.length; i++)
@@ -310,7 +313,7 @@ public class MainPaint extends JFrame {
 				}
 			});
 		}
-		/* 4. JColorChooser이용해 다양한 색상을 사용자 설정 가능한 버튼 */
+		/* 5. JColorChooser이용해 다양한 색상을 사용자 설정 가능한 버튼 */
 		moreColor.setSize(50, 50);
 		moreColor.setLocation(680, 20);
 		moreColor.addActionListener(new ActionListener() {	
@@ -324,6 +327,22 @@ public class MainPaint extends JFrame {
 				drawP.shape.setColor(selectedColor);
 			}
 		});
+		/* 6. 스포이드 구현 : 마우스를 올려놓은 컴포넌트의 색상을 반환해 설정해주는 기능 */
+		spoidBtn.setSize(50, 50);
+		spoidBtn.setLocation(750, 20);
+		spoidBtn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				drawP.drawM = 13;	//스포이드 모드로 설정
+				/* 스포이드 버튼 색상이 보이려면 토글이 눌리자마자 취소되어야 함 */
+				spoidBtn.setSelected(false);
+				//TODO : 이거 안돼요...ㅠㅠㅠ
+				/* 스포이드 버튼 누르면 leftPanel 에 있는 토글 버튼들 모두 취소된 상태로 바꾸기 */
+				for (int i = 0; i < 12 ; i++)
+					Tbtn[i].setSelected(false);
+			}
+		});
+		//TODO : 다른 도구 버튼은 false 되도록 (leftPanel의 도구 토글버튼들)
 		
 		bar.add(newBtn);
 		bar.addSeparator();
@@ -333,6 +352,7 @@ public class MainPaint extends JFrame {
 		bar.add(nowColor);
 		bar.add(colorP);
 		bar.add(moreColor);
+		bar.add(spoidBtn);
 		mainP.add(bar, BorderLayout.NORTH);
 	}
 	/* 그리기 도형 선택 버튼에 대한 리스너 */

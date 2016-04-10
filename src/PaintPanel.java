@@ -8,7 +8,7 @@ import java.util.Vector;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
-/*
+/**
  * 실질적으로 그림을 그리는 패널
  * 마우스 클릭/해제/드래그 때의 리스너를 등록해놓았다.
  * 1. PaintPanel 클래스 구성 : ShapeInfo의 shape 객체로 도형 정보 등록 
@@ -43,10 +43,10 @@ public class PaintPanel extends JPanel {
 	final static int PENTA = 10;	//오각형
 	final static int HEXA = 11;		//육각형
 	final static int STAR = 12;		//별
+	final static int SPOID = 13;	//스포이드
 
 
 	public PaintPanel (String path) {
-		setBackground(Color.WHITE);
 		g1.fillRect(0, 0, 1000, 800);
 		g1.drawImage(new ImageIcon(path).getImage(), 0, 0, null);
 		/* 기본 배경색 하얀색으로 설정 */
@@ -93,6 +93,8 @@ public class PaintPanel extends JPanel {
 			{
 				selectArea.x = -1; // 드래그 시작 위치
 			}
+			if (drawM == SPOID)
+				return ;
 			/* 첫 시작점 shape 객체 내 포인트 벡터에 저장 
 			 * (이 상태에서는 포인트 벡터 내에 아무 포인트도 없는 상태) */
 			shape.add(e.getPoint());
@@ -105,6 +107,12 @@ public class PaintPanel extends JPanel {
 			/* 선택 모드일 때 */
 			if (drawM == SELECT)
 				return ;
+			if (drawM == SPOID)
+			{
+				MainPaint.nowColor.setColor(MainPaint.spoidBtn.getBackground());
+				shape.setColor(MainPaint.spoidBtn.getBackground());
+				return ;
+			}
 			// 포인트 shape 객체 내 벡터에 저장 (끝점 저장)
 			shape.add(e.getPoint());
 			/* 포인트 shape 객체 내 벡터에 저장되어 있는 시작점과 끝점 받아오기 */
@@ -174,6 +182,8 @@ public class PaintPanel extends JPanel {
 		 * 단, PENCIL, BRUSH, ERASE는 드래그할 때도 실제로 그려짐 : g1 그래픽 객체 사용
 		 * 나머지 도형들은 임시로만 보여지도록 지역 객체로 g2 그래픽 객체에 그림 */
 		public void mouseDragged(MouseEvent e) {
+			if (drawM == SPOID)
+				return ;
 			/* 선택 모드일 때 */
 			if (drawM == SELECT)
 			{
@@ -269,8 +279,20 @@ public class PaintPanel extends JPanel {
 				getParent().repaint();
 			}
 		}
+		/* 스포이드 기능 구현하기 위해 구현한 mouseMoved 
+		 * 마우스가 움직일 때 그 좌표의 RGB값으로 color 객체를 생성해 스포이드 배경색으로 보여준다 */
+		public void mouseMoved(MouseEvent e) {
+			if (drawM != SPOID)
+			{
+				MainPaint.spoidBtn.setOpaque(false);
+				return ;
+			}
+			Color color = new Color(b1.getRGB(e.getPoint().x, e.getPoint().y));
+			MainPaint.spoidBtn.setBackground(color);
+			MainPaint.spoidBtn.setOpaque(true);
+			//System.out.println("("+e.getPoint().x+", "+e.getPoint().y+") RGB값 : "+color.getRed()+", "+color.getGreen()+", "+color.getBlue());
+		}
 		/* 사용하지 않는 메소드들 : 사용하지 않아도 implements 했기 때문에 빈 상태로 오버라이드 */
-		public void mouseMoved(MouseEvent e) {}
 		public void mouseClicked(MouseEvent e) {}
 		public void mouseEntered(MouseEvent e) {}
 		public void mouseExited(MouseEvent e) {}

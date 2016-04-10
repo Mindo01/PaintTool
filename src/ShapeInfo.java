@@ -1,7 +1,7 @@
 import java.awt.*;
 import java.util.Vector;
 
-/* 
+/**
  * 도형에 대한 정보를 담고 있는 클래스
  * 1. 포인트 시작점/끝점 판별
  * 2. 선 색상

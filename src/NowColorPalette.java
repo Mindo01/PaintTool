@@ -2,7 +2,7 @@ import java.awt.Color;
 import java.awt.GridLayout;
 
 import javax.swing.*;
-/*
+/**
  * 현재 선택된 색깔을 디스플레이 해주는 패널
  * */
 public class NowColorPalette extends JPanel{
