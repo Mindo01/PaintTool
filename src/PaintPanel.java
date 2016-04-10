@@ -23,10 +23,14 @@ public class PaintPanel extends JPanel {
 	private BufferedImage b1 = new BufferedImage(1000, 800, BufferedImage.TYPE_3BYTE_BGR);
 	private BufferedImage b2 = new BufferedImage(1000, 800, BufferedImage.TYPE_3BYTE_BGR);
 	private Graphics g1 = b1.getGraphics(); // 실제 그려지는 영역
+	private Graphics g2 = b2.getGraphics(); // 복사 해놓는 영역
 	String thisPath = null;
-	ShapeInfo shape = new ShapeInfo();
-	int drawM = 1;	//그리기 모드	// 이거 또는 shape내의 type필드 둘 중 하나 선택하고 지우기 *******
+	ShapeInfo shape;
+	Rectangle selectArea;	// 선택 영역 저장하는 네모
+	Color bgColor;			//배경색 저장
+	int drawM = 1;			//그리기 모드	// 이거 또는 shape내의 type필드 둘 중 하나 선택하고 지우기 *******
 	/* 그리기 모드에 대응하는 상수들 */
+	final static int SELECT = 0;	//선택모드
 	final static int PENCIL = 1;	//자유 곡선
 	final static int BRUSH = 2;		//붓
 	final static int DASH = 3;		//점선
@@ -40,27 +44,67 @@ public class PaintPanel extends JPanel {
 	final static int HEXA = 11;		//육각형
 	final static int STAR = 12;		//별
 
+
 	public PaintPanel (String path) {
 		setBackground(Color.WHITE);
 		g1.fillRect(0, 0, 1000, 800);
 		g1.drawImage(new ImageIcon(path).getImage(), 0, 0, null);
-		/* 기본 선 굵기 설정 */
-		shape.setStroke(1);
+		/* 기본 배경색 하얀색으로 설정 */
+		bgColor = Color.WHITE;
+		/* 도형 정보를 담는 객체 생성 */
+		shape = new ShapeInfo();
+		/* 선택 영역을 보여주는 사각형 객체 생성 */
+		selectArea = new Rectangle(-1, 0, 0, 0);
 		addMouseListener( new PaintListener());
 		addMouseMotionListener( new PaintListener());
 	}
 	
+	/* 선택된 영역을 복사해 두는 메소드
+	 */
+	public void copy() {
+		g2.drawImage(b1, 0, 0, 1120, 840, selectArea.x, selectArea.y, selectArea.x + selectArea.width, selectArea.y + selectArea.height, null);
+	}
+
+	/* 선택한 영역에 복사한거나 잘라낸것을 붙이는 메소드, 선택영역을 크게 드래그하면 확대해서, 작게하면 축소해서, 같게하면 똑같게
+	 * 붙여넣어짐
+	 * */
+	public void paste() {
+		g1.drawImage(b2, selectArea.x, selectArea.y, selectArea.x + selectArea.width, selectArea.y + selectArea.height, 0, 0, 1120, 840, null);
+		repaint();
+	}
+
+	/* 선택한 영역을 잘라내는 메소드(잘라진 영역은 흰색으로 변함)
+	 */
+	public void cut() {
+		g2.drawImage(b1, 0, 0, 1120, 840, selectArea.x, selectArea.y, selectArea.x + selectArea.width, selectArea.y + selectArea.height, null);
+		g1.setColor(Color.white);
+		g1.fillRect(selectArea.x, selectArea.y, selectArea.width, selectArea.height);
+		repaint();
+
+	}
+	
+	
+	/* 마우스 클릭과 클릭해제, 드래그에 따라 다르게 반응하는 리스너 */
 	class PaintListener implements MouseListener, MouseMotionListener {
+		/* 1. 마우스 클릭되었을 떄의 이벤트 */
 		public void mousePressed(MouseEvent e) {
+			/* 선택 모드일 때 */
+			if (drawM == SELECT) 
+			{
+				selectArea.x = -1; // 드래그 시작 위치
+			}
 			/* 첫 시작점 shape 객체 내 포인트 벡터에 저장 
 			 * (이 상태에서는 포인트 벡터 내에 아무 포인트도 없는 상태) */
 			shape.add(e.getPoint());
-			((Graphics2D)g1).setStroke(shape.getStroke());	// 선 굵기 설정
+			((Graphics2D)g1).setStroke(shape.getStroke(drawM));	// 선 굵기 설정
 			g1.setColor(shape.getColor());					// 선 색 / 채우기 색 설정
 		}
-		/* 마우스 클릭이 해제됐을 때의 이벤트
+		/* 2. 마우스 클릭이 해제됐을 때의 이벤트
 		 * 도형 그리기는 이 때 실질적으로 패널에 그려짐 (g1 사용) */
 		public void mouseReleased(MouseEvent e) {
+			/* 선택 모드일 때 */
+			if (drawM == SELECT)
+				return ;
 			// 포인트 shape 객체 내 벡터에 저장 (끝점 저장)
 			shape.add(e.getPoint());
 			/* 포인트 shape 객체 내 벡터에 저장되어 있는 시작점과 끝점 받아오기 */
@@ -69,10 +113,10 @@ public class PaintPanel extends JPanel {
 			Rectangle rect = shape.getRect(sp, ep);
 			switch (drawM)
 			{
+				case SELECT :
+					
+				break;
 				case ERASE :
-					/* 지우개는 굵기의 최저값이 10이도록 설정 */
-					if (shape.getIntStroke() < 10)
-						((Graphics2D) g1).setStroke(new BasicStroke(10));
 					g1.setColor(Color.WHITE);
 				case PENCIL :
 					sp = shape.point.size() > 1 ? shape.point.get(shape.point.size() - 2) : shape.point.firstElement();
@@ -80,12 +124,12 @@ public class PaintPanel extends JPanel {
 					break;
 				case BRUSH :
 					sp = shape.point.size() > 1 ? shape.point.get(shape.point.size() - 2) : shape.point.firstElement();
-					((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(), BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
+					((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(drawM), BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
 					g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
 					break;
 				case DASH :
 					float[] dash = new float[] { 10, 10, 10, 10 };
-					((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(), 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
+					((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(drawM), 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
 				case LINE : 
 					g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
 					break;
@@ -126,10 +170,22 @@ public class PaintPanel extends JPanel {
 			shape.get().clear();
 		}
 		
-		/* 마우스 클릭 후 드래그 할 때, 임시로 보여지는 도형의 이벤트 구현 
+		/* 3. 마우스 클릭 후 드래그 할 때, 임시로 보여지는 도형의 이벤트 구현 
 		 * 단, PENCIL, BRUSH, ERASE는 드래그할 때도 실제로 그려짐 : g1 그래픽 객체 사용
 		 * 나머지 도형들은 임시로만 보여지도록 지역 객체로 g2 그래픽 객체에 그림 */
 		public void mouseDragged(MouseEvent e) {
+			/* 선택 모드일 때 */
+			if (drawM == SELECT)
+			{
+				if (selectArea.x == -1) {
+					selectArea.setBounds(e.getX(), e.getY(), 0, 0);
+				}
+
+				selectArea.width = e.getX() - selectArea.x;
+				selectArea.height = e.getY() - selectArea.y;
+				repaint();
+				return ;
+			}
 			shape.add(e.getPoint());
 			Point sp = shape.get().firstElement();
 			Point ep = shape.get().lastElement();
@@ -144,13 +200,18 @@ public class PaintPanel extends JPanel {
 				{
 					g1.setColor(Color.WHITE);
 					/* 지우개는 굵기의 최저값이 10이도록 설정 */
-					if (shape.getIntStroke() < 10)
+					if (shape.getIntStroke(drawM) < 10)
+					{
 						((Graphics2D) g1).setStroke(new BasicStroke(10));
+						MainPaint.strokeValue.setSelectedIndex(2);	// 선 굵기 콤보박스 아이템 설정을 강제로 10으로 변경
+					}
+					((Graphics2D) g1).setStroke(shape.getStroke(drawM));
 				}
+				/* 선 그릴 때, 선이 제대로 연결되도록, 바로 이전의 포인트와 계속해서 연결 */
 				sp = shape.point.size() > 1 ? shape.point.get(shape.point.size() - 2) : shape.point.firstElement();
 				if (drawM == BRUSH)
 				{
-					((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(), BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
+					((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(drawM), BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
 					g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
 				}
 				else
@@ -169,7 +230,7 @@ public class PaintPanel extends JPanel {
 				{
 					case DASH : 
 						float[] dash = new float[] { 10, 10, 10, 10 };
-						((Graphics2D) g2).setStroke(new BasicStroke(shape.getIntStroke(), 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
+						((Graphics2D) g2).setStroke(new BasicStroke(shape.getIntStroke(drawM), 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
 					case LINE : 
 						g2.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
 						break;
@@ -220,13 +281,13 @@ public class PaintPanel extends JPanel {
 		switch (type)
 		{
 			case 1 : // 실선 : 아무것도 안해줌
-				((Graphics2D) g).setStroke(shape.getStroke());
-				((Graphics2D) g1).setStroke(shape.getStroke());
+				((Graphics2D) g).setStroke(shape.getStroke(drawM));
+				((Graphics2D) g1).setStroke(shape.getStroke(drawM));
 				break;	
 			case 2 : // 점선 : 선 유형 바꿔주기
 				float[] dash = new float[] { 10, 10, 10, 10 };
-				((Graphics2D) g).setStroke(new BasicStroke(shape.getIntStroke(), 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
-				((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(), 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
+				((Graphics2D) g).setStroke(new BasicStroke(shape.getIntStroke(drawM), 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
+				((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(drawM), 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
 				break;
 		}
 	}
@@ -423,11 +484,19 @@ public class PaintPanel extends JPanel {
 		return fileName;
 	}
 	
-	public void cancel() {
-		getParent().repaint();
-	}
 	/* repaint() 호출 시 실행되는 메소드 */
 	public void paint(Graphics g) {
+		super.paint(g);
 		g.drawImage(b1, 0, 0, this);
+		
+		if (drawM == SELECT) { // 선택모드일시
+			if (selectArea.x != -1) {
+				Graphics g2 = g;
+				float[] dash = new float[] { 5, 5, 5, 5 };
+				((Graphics2D) g2).setStroke(new BasicStroke(2, 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
+				g2.setColor(Color.CYAN);
+				g2.drawRect(selectArea.x, selectArea.y, selectArea.width, selectArea.height);
+			}
+		}
 	}
 }

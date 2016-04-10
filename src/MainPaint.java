@@ -1,6 +1,7 @@
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -27,6 +28,7 @@ public class MainPaint extends JFrame {
 	String[] strSize = {"선 굵기 1", "선 굵기 5", "선 굵기 10", "선 굵기 25", "선 굵기 40", "선 굵기 60"};
 	String[] strType = {"실선", "점선"};
 	int[] strValue = {1, 5, 10, 25, 40, 60};
+	static JComboBox strokeValue;
 	/* 생성자 */
 	public MainPaint() {
 		setTitle("민주 그림판 - 제목 없음.png");
@@ -84,11 +86,21 @@ public class MainPaint extends JFrame {
 		save = new JMenuItem("저장");
 		saveAs = new JMenuItem("다른 이름으로 저장");
 		open = new JMenuItem("열기");
+		// 파일 하위 아이템 단축키 설정
+		newFile.setAccelerator(KeyStroke.getKeyStroke('N', InputEvent.CTRL_MASK));
+		save.setAccelerator(KeyStroke.getKeyStroke('S', InputEvent.CTRL_MASK));
+		saveAs.setAccelerator(KeyStroke.getKeyStroke('S', InputEvent.SHIFT_MASK + InputEvent.CTRL_MASK));
+		open.setAccelerator(KeyStroke.getKeyStroke('G', InputEvent.CTRL_MASK));
 		// 편집 하위 아이템
 		select = new JMenuItem("선택");
 		copy = new JMenuItem("복사");
 		cut = new JMenuItem("자르기");
 		paste = new JMenuItem("붙여넣기");
+		// 편집 하위 아이템 단축키 설정
+		select.setAccelerator(KeyStroke.getKeyStroke("S"));
+		copy.setAccelerator(KeyStroke.getKeyStroke('C', InputEvent.CTRL_MASK));
+		cut.setAccelerator(KeyStroke.getKeyStroke('X', InputEvent.CTRL_MASK));
+		paste.setAccelerator(KeyStroke.getKeyStroke('V', InputEvent.CTRL_MASK));
 		// 도움 하위 아이템
 		nameM = new JMenuItem("만든이 정보");
 		/* 메뉴 아이템에 대한 리스너 등록 */
@@ -130,6 +142,31 @@ public class MainPaint extends JFrame {
 					title = "제목 없음.png";
 				setTitle("민주 그림판 - "+title);
 				
+			}
+		});
+		/* 편집 메뉴 아이템들 리스너 등록 */
+		select.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				drawP.drawM = 0;	//선택 모드로 설정
+			}
+		});
+		copy.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				drawP.copy();	//선택 모드에서 지정된 영역 복사
+			}
+		});
+		cut.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				drawP.cut();	//선택 모드에서 지정된 영역 자르기
+			}
+		});
+		paste.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				drawP.paste();	//선택 모드에서 지정된 영역에 붙여넣기
 			}
 		});
 		/* 만든이 정보 다이얼로그 */
@@ -209,7 +246,7 @@ public class MainPaint extends JFrame {
 		JButton moreColor = new JButton(new ImageIcon(getClass().getClassLoader().getResource("draw_colors.png")));
 		NowColorPalette nowColor = new NowColorPalette("현재 색");
 		ColorPalette colorP = new ColorPalette();
-		JComboBox strokeValue = new JComboBox();
+		strokeValue = new JComboBox();
 		JComboBox strokeType = new JComboBox();
 		
 		/* 0. 배치관리자 제거 후, 툴바 내에 컴포넌트 절대 위치에 배치하기 */
@@ -236,8 +273,8 @@ public class MainPaint extends JFrame {
 				String item = (String)cb.getSelectedItem();
 				for (int i = 0; i < strSize.length; i++)
 					if (item.equals(strSize[i]))
-							drawP.shape.setStroke(strValue[i]);
-				System.out.println("stroke : "+drawP.shape.getIntStroke());
+							drawP.shape.setStroke(strValue[i], drawP.drawM);
+				System.out.println("stroke : "+drawP.shape.getIntStroke(drawP.drawM));
 			}
 		});
 		/* . 선 유형 설정 */
@@ -312,6 +349,8 @@ public class MainPaint extends JFrame {
 					break;
 				}
 			}
+			/* 현재 도형 유형에 따라 선 굵기 콤보박스에 다르게 선택되어 있도록 설정 */
+			strokeValue.setSelectedIndex(drawP.shape.strokeIndex(drawP.shape.getIntStroke(drawP.drawM)));
 			//그리기 모드 확인용 콘솔 출력
 			System.out.println("그리기 모드 : "+drawP.drawM);
 		}
