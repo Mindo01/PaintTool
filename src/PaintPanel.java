@@ -11,9 +11,17 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 /*
  * 실질적으로 그림을 그리는 패널
  * 마우스 클릭/해제/드래그 때의 리스너를 등록해놓았다.
+ * 1. PaintPanel 클래스 구성 : ShapeInfo의 shape 객체로 도형 정보 등록 
+ * 						/ 실질적인 그림 그리기 패널의 paint() 메소드 구현
+ * 2. save / open / saveAs 메소드 구현 : 열기, 저장, 다른 이름으로 저장
+ * 3. drawTriangle/Pentagon/Hexagon/Star 메소드 구현으로 특수도형 그리기 구현
+ * 4. init() 메소드로 그림판 새로 시작하는 메소드 구현
+ * 5. 그리기 모드에 대응하는 상수들 선언 :
+ * 		PENCIL BRUSH DASH ERASE LINE REC OVAL ROUNDREC TRI PENTA HEXA STAR
  * */
 public class PaintPanel extends JPanel {
 	private BufferedImage b1 = new BufferedImage(1000, 800, BufferedImage.TYPE_3BYTE_BGR);
+	private BufferedImage b2 = new BufferedImage(1000, 800, BufferedImage.TYPE_3BYTE_BGR);
 	private Graphics g1 = b1.getGraphics(); // 실제 그려지는 영역
 	String thisPath = null;
 	ShapeInfo shape = new ShapeInfo();
@@ -44,15 +52,20 @@ public class PaintPanel extends JPanel {
 	
 	class PaintListener implements MouseListener, MouseMotionListener {
 		public void mousePressed(MouseEvent e) {
-			// 첫 시작점 저장
+			/* 첫 시작점 shape 객체 내 포인트 벡터에 저장 
+			 * (이 상태에서는 포인트 벡터 내에 아무 포인트도 없는 상태) */
 			shape.add(e.getPoint());
-			((Graphics2D)g1).setStroke(shape.getStroke());
+			((Graphics2D)g1).setStroke(shape.getStroke());	// 선 굵기 설정
+			g1.setColor(shape.getColor());					// 선 색 / 채우기 색 설정
 		}
+		/* 마우스 클릭이 해제됐을 때의 이벤트
+		 * 도형 그리기는 이 때 실질적으로 패널에 그려짐 (g1 사용) */
 		public void mouseReleased(MouseEvent e) {
+			// 포인트 shape 객체 내 벡터에 저장 (끝점 저장)
 			shape.add(e.getPoint());
-			Point sp = shape.get().firstElement();
-			Point ep = shape.get().lastElement();
-			g1.setColor(shape.getColor());
+			/* 포인트 shape 객체 내 벡터에 저장되어 있는 시작점과 끝점 받아오기 */
+			Point sp = shape.get().firstElement();	// 시작점
+			Point ep = shape.get().lastElement();	// 끝점
 			Rectangle rect = shape.getRect(sp, ep);
 			switch (drawM)
 			{
@@ -112,6 +125,10 @@ public class PaintPanel extends JPanel {
 			/* 저장된 포인트 모두 삭제 */
 			shape.get().clear();
 		}
+		
+		/* 마우스 클릭 후 드래그 할 때, 임시로 보여지는 도형의 이벤트 구현 
+		 * 단, PENCIL, BRUSH, ERASE는 드래그할 때도 실제로 그려짐 : g1 그래픽 객체 사용
+		 * 나머지 도형들은 임시로만 보여지도록 지역 객체로 g2 그래픽 객체에 그림 */
 		public void mouseDragged(MouseEvent e) {
 			shape.add(e.getPoint());
 			Point sp = shape.get().firstElement();
@@ -123,9 +140,13 @@ public class PaintPanel extends JPanel {
 			if (drawM == PENCIL || drawM == BRUSH || drawM == ERASE )	// 자유곡선, 지우개일 때
 			{
 				((Graphics2D) g1).setStroke(shape.stroke);
-				g1.setColor(shape.getColor());
 				if (drawM == ERASE)
+				{
 					g1.setColor(Color.WHITE);
+					/* 지우개는 굵기의 최저값이 10이도록 설정 */
+					if (shape.getIntStroke() < 10)
+						((Graphics2D) g1).setStroke(new BasicStroke(10));
+				}
 				sp = shape.point.size() > 1 ? shape.point.get(shape.point.size() - 2) : shape.point.firstElement();
 				if (drawM == BRUSH)
 				{
@@ -140,10 +161,10 @@ public class PaintPanel extends JPanel {
 			}
 			else
 			{
-				Graphics g2 = getGraphics();
-				Rectangle rect = shape.getRect(sp, ep);
-				((Graphics2D) g2).setStroke(shape.stroke);
-				g2.setColor(shape.getColor());
+				Graphics g2 = getGraphics();				//임시 그래픽 객체 받아오기
+				Rectangle rect = shape.getRect(sp, ep);		//시작점 끝점 기준으로 사각형 받아오기 (도형 그리기에 사용됨)
+				setStrokeType(g2, shape.getStrokeType());	//임시 객체, g1 객체 선 유형 설정하기
+				g2.setColor(shape.getColor());				//임시 객체 선 색 설정하기
 				switch (drawM)
 				{
 					case DASH : 
@@ -183,6 +204,7 @@ public class PaintPanel extends JPanel {
 						drawStar(g2, sp, ep, rect, shape.fill);
 						break;
 				}
+				/* g2 객체로 그린 것 매번 지워주는 부분 : 부모를 불러와 repaint를 해서 방금 그린 것을 없애줌 */
 				getParent().repaint();
 			}
 		}
@@ -191,6 +213,22 @@ public class PaintPanel extends JPanel {
 		public void mouseClicked(MouseEvent e) {}
 		public void mouseEntered(MouseEvent e) {}
 		public void mouseExited(MouseEvent e) {}
+	}
+	/* 선 유형 설정해주는 메소드 */
+	public void setStrokeType(Graphics g, int type)
+	{
+		switch (type)
+		{
+			case 1 : // 실선 : 아무것도 안해줌
+				((Graphics2D) g).setStroke(shape.getStroke());
+				((Graphics2D) g1).setStroke(shape.getStroke());
+				break;	
+			case 2 : // 점선 : 선 유형 바꿔주기
+				float[] dash = new float[] { 10, 10, 10, 10 };
+				((Graphics2D) g).setStroke(new BasicStroke(shape.getIntStroke(), 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
+				((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(), 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
+				break;
+		}
 	}
 	/* TRI : triangle : 삼각형 그리는 메소드 */
 	public void drawTriangle(Graphics g, Point sp, Point ep, Rectangle rect, boolean fill) {
@@ -212,22 +250,18 @@ public class PaintPanel extends JPanel {
 	/* PENTA : pentagon : 오각형 그리는 메소드 */
 	public void drawPentagon(Graphics g, Point sp, Point ep, Rectangle rect, boolean fill) {
 		int r = rect.width;
-		int[] x = new int[5];
-		int[] y = new int[5];
-		for (int i = 0; i < 5; i++) {
-			x[i] = (int) (r * Math.cos(i * 2 * Math.PI / 5));
-			y[i] = (int) (r * Math.sin(i * 2 * Math.PI / 5));
-		}
+		int[] x = {sp.x, ((ep.x - (sp.x+ep.x)/2)/2+ep.x+sp.x)/2, (ep.x - (sp.x + ep.x)/2)/2+ep.x, ep.x, ((sp.x+ep.x)/2-sp.x)/2+sp.x };
+		int[] y = {sp.y, sp.y - (ep.y-sp.y)/2, sp.y, ep.y, ep.y};
 		/* 기준 점을 드래그하는 점과 점 사이의 중간점으로 설정 */
 		int standX = (sp.x + ep.x)/2;
 		int standY = (sp.y + ep.y)/2;
-		g.translate(standX, standY);
+		//g.translate(standX, standY);
 		/* 도형 채우기 여부 */
 		if (fill == false)
 			g.drawPolygon(x, y, x.length);
 		else
 			g.fillPolygon(x, y, x.length);
-		g.translate(-standX, -standY);
+		//g.translate(-standX, -standY);
 	}
 	/* HEXA : hexagon : 육각형 그리는 메소드 */
 	public void drawHexagon(Graphics g, Point sp, Point ep, Rectangle rect, boolean fill) {
@@ -285,6 +319,8 @@ public class PaintPanel extends JPanel {
 	
 	/* 그림판 새로 시작하기 */
 	public void init(String path) {
+		/* 변경 사항 저장할 건지 물어보기 */
+		//TODO 
 		g1.setColor(Color.WHITE);
 		g1.fillRect(0, 0, 1000, 800);
 		g1.drawImage(new ImageIcon(path).getImage(), 0, 0, null);
@@ -314,6 +350,7 @@ public class PaintPanel extends JPanel {
 		init(pathName);
 		/* 파일 이름으로 타이틀 설정 */
 		return fileName;
+		
 	}
 	/* 저장 다이얼로그 출력하고 파일 이름 불러오는 메소드 */
 	public String saveAs() {
@@ -385,8 +422,12 @@ public class PaintPanel extends JPanel {
 		}
 		return fileName;
 	}
+	
+	public void cancel() {
+		getParent().repaint();
+	}
 	/* repaint() 호출 시 실행되는 메소드 */
 	public void paint(Graphics g) {
-		g.drawImage(b1, 0, 0, null);
+		g.drawImage(b1, 0, 0, this);
 	}
 }

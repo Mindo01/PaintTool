@@ -15,6 +15,6 @@ public class MJDialog extends JDialog{
 		setSize(200, 150);
 		/* 다이얼로그 띄워줄 윈도우상 위치 */
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-		setLocation((screenSize.width-320)/2, (screenSize.height-560)/2);
+		setLocation((screenSize.width-1000)/2, (screenSize.height-800)/2);
 	}
 }

@@ -11,9 +11,13 @@ import javax.swing.*;
 /*
  * 메인 프로그램 : JFrame 상속
  * UI 디자인이 실질적으로 이루어지고, 프레임이 생성되는 클래스
+ * 1. 프레임 생성 및 컴포넌트 부착
+ * 2. 왼쪽 패널, 툴바, 메뉴바 부착
+ * 3. PaintPanel 클래스의 객체인 drawP 부착
+ * 4. 도형 선택하는 버튼 이벤트 등록
  * */
 public class MainPaint extends JFrame {
-	Container contentP;
+	Container contentP;	// 현재 컨테이너를 받아 여기에 컴포넌트 부착
 	JPanel mainP;
 	PaintPanel drawP;
 	String[] btnName = {"자유", "붓", "점선", "지우개", "선", "네모", "동글", "둥근네모", "세모", "오각형", "육각형", "별"};
@@ -21,6 +25,7 @@ public class MainPaint extends JFrame {
 	ImageButton[] Tbtn = new ImageButton[12];
 	ButtonGroup bg = new ButtonGroup();	//토글 버튼들 묶어주는 버튼 그룹
 	String[] strSize = {"선 굵기 1", "선 굵기 5", "선 굵기 10", "선 굵기 25", "선 굵기 40", "선 굵기 60"};
+	String[] strType = {"실선", "점선"};
 	int[] strValue = {1, 5, 10, 25, 40, 60};
 	/* 생성자 */
 	public MainPaint() {
@@ -55,23 +60,36 @@ public class MainPaint extends JFrame {
 	void createMenu() {
 		/* 메뉴, 메뉴바, 메뉴아이템 */
 		JMenuBar mb;
-		JMenu fileMenu, nameMenu;
+		JMenu fileMenu, editMenu, nameMenu;
 		JMenuItem newFile, save, saveAs, open;	// 새로만들기, 저장, 다른 이름으로 저장, 열기
+		JMenuItem select, copy, cut, paste;
 		JMenuItem nameM;	// 만든 이 정보
 		/* 메뉴바 */
 		mb = new JMenuBar();	// 메뉴 바
-		mb.setPreferredSize(new Dimension(320, 40));
+		mb.setPreferredSize(new Dimension(320, 45));
 		mb.setLocation(0, 0);
 		mb.setBackground(Color.DARK_GRAY);
-		fileMenu = new JMenu("파일");	// 메뉴 바의 메뉴
+		fileMenu = new JMenu("파일");	// 파일 메뉴
+		editMenu = new JMenu("편집");	// 편집 메뉴
 		nameMenu = new JMenu("도움");	// 기타 메뉴
 		fileMenu.setForeground(Color.WHITE);
+		fileMenu.setPreferredSize(new Dimension(50, 45));
+		editMenu.setForeground(Color.WHITE);
+		editMenu.setPreferredSize(new Dimension(50, 45));
 		nameMenu.setForeground(Color.WHITE);
+		nameMenu.setPreferredSize(new Dimension(50, 45));
 		/* 메뉴 아이템들 생성 */
+		// 파일 하위 아이템
 		newFile = new JMenuItem("새로 만들기");
 		save = new JMenuItem("저장");
 		saveAs = new JMenuItem("다른 이름으로 저장");
 		open = new JMenuItem("열기");
+		// 편집 하위 아이템
+		select = new JMenuItem("선택");
+		copy = new JMenuItem("복사");
+		cut = new JMenuItem("자르기");
+		paste = new JMenuItem("붙여넣기");
+		// 도움 하위 아이템
 		nameM = new JMenuItem("만든이 정보");
 		/* 메뉴 아이템에 대한 리스너 등록 */
 		newFile.addActionListener(new ActionListener() {
@@ -129,9 +147,14 @@ public class MainPaint extends JFrame {
 		fileMenu.addSeparator();	// 메뉴 아이템 구분선
 		fileMenu.add(save);
 		fileMenu.add(saveAs);
+		editMenu.add(select);
+		editMenu.add(copy);
+		editMenu.add(cut);
+		editMenu.add(paste);
 		nameMenu.add(nameM);
 		// 메뉴 바에 메뉴 등록
 		mb.add(fileMenu);
+		mb.add(editMenu);
 		mb.add(nameMenu);
 		// 컨탠트 팬에 메뉴 바 등록
 		contentP.add(mb, BorderLayout.NORTH);
@@ -187,6 +210,9 @@ public class MainPaint extends JFrame {
 		NowColorPalette nowColor = new NowColorPalette("현재 색");
 		ColorPalette colorP = new ColorPalette();
 		JComboBox strokeValue = new JComboBox();
+		JComboBox strokeType = new JComboBox();
+		
+		/* 0. 배치관리자 제거 후, 툴바 내에 컴포넌트 절대 위치에 배치하기 */
 		bar.setLayout(null);
 		bar.setPreferredSize(new Dimension(800, 90));
 		/* 1. 새로 만들기 버튼 : 그리는 패널 초기화*/
@@ -214,12 +240,28 @@ public class MainPaint extends JFrame {
 				System.out.println("stroke : "+drawP.shape.getIntStroke());
 			}
 		});
+		/* . 선 유형 설정 */
+		strokeType.setSize(100, 35);
+		strokeType.setLocation(220, 27);
+		for (int i = 0; i < strType.length; i++)
+			strokeType.addItem(strType[i]);
+		strokeType.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JComboBox cb = (JComboBox)e.getSource();
+				String item = (String)cb.getSelectedItem();
+				for (int i = 0; i < strType.length; i++)
+					if (item.equals(strType[i]))
+							drawP.shape.setStrokeType(strType[i]);
+				System.out.println("stroke : "+drawP.shape.getStrokeType());
+			}
+		});
 		/* 2. 현재 색상을 보여주는 라벨 */
 		nowColor.setSize(60, 60);
-		nowColor.setLocation(220, 15);
+		nowColor.setLocation(340, 15);
 		/* 3. 기본 색상표 10개 : 패널 (ColorPalette 클래스의 객체) */
 		colorP.setSize(240, 60);
-		colorP.setLocation(300, 15);
+		colorP.setLocation(420, 15);
 		for (int i = 0; i < colorP.paletBtn.length; i++)
 		{
 			colorP.paletBtn[i].addMouseListener(new MouseAdapter() {
@@ -233,7 +275,7 @@ public class MainPaint extends JFrame {
 		}
 		/* 4. JColorChooser이용해 다양한 색상을 사용자 설정 가능한 버튼 */
 		moreColor.setSize(50, 50);
-		moreColor.setLocation(560, 20);
+		moreColor.setLocation(680, 20);
 		moreColor.addActionListener(new ActionListener() {	
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -249,6 +291,7 @@ public class MainPaint extends JFrame {
 		bar.add(newBtn);
 		bar.addSeparator();
 		bar.add(strokeValue);
+		bar.add(strokeType);
 		bar.addSeparator();
 		bar.add(nowColor);
 		bar.add(colorP);
@@ -258,7 +301,7 @@ public class MainPaint extends JFrame {
 	/* 그리기 도형 선택 버튼에 대한 리스너 */
 	class BtnListener implements MouseListener {
 		@Override
-		public void mouseClicked(MouseEvent e) {
+		public void mousePressed(MouseEvent e) {
 			ImageButton btn = (ImageButton)e.getSource();
 			/* 눌린 버튼 찾아서 그리기 모드 설정하기 */
 			for (int i = 0; i < btnName.length; i++)
@@ -273,7 +316,7 @@ public class MainPaint extends JFrame {
 			System.out.println("그리기 모드 : "+drawP.drawM);
 		}
 		/* 사용하지 않는 메소드들 : 사용하지 않아도 implements 했기 때문에 빈 상태로 오버라이드 */
-		public void mousePressed(MouseEvent e) { }
+		public void mouseClicked(MouseEvent e) { }
 		public void mouseReleased(MouseEvent e) { }
 		public void mouseEntered(MouseEvent e) { }
 		public void mouseExited(MouseEvent e) {	}
