@@ -1,4 +1,4 @@
-package com.mjpaint.view;
+package com.mjpaint.controller;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -9,7 +9,6 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import com.mjpaint.controller.MainPaint;
 import com.mjpaint.model.ShapeInfo;
 /**
  * 실질적으로 그림을 그리는 패널
@@ -110,7 +109,7 @@ public class PaintPanel extends JPanel {
 				return ;
 			/* 형광펜 일 때, 투명도 설정 / 아니면 다시 투명도 255(최대값)으로 설정 */
 			if (drawM == HIGHLIGHT)
-				shape.setOpacity(shape.getColor(), 30);
+				shape.setOpacity(shape.getColor(), 10);
 			else
 				shape.setOpacity(shape.getColor(), 255);
 			/* 첫 시작점 shape 객체 내 포인트 벡터에 저장 
@@ -179,9 +178,9 @@ public class PaintPanel extends JPanel {
 					break;
 				case ROUNDREC :
 					if (shape.fill == false)
-						g1.drawRoundRect(rect.x, rect.y, rect.width, rect.height, 50, 50);	//뒤에 두 인자는 둥근 정도 수치
+						g1.drawRoundRect(rect.x, rect.y, rect.width, rect.height, shape.getRoundRec(), shape.getRoundRec());	//뒤에 두 인자는 둥근 정도 수치
 					else
-						g1.fillRoundRect(rect.x, rect.y, rect.width, rect.height, 50, 50);
+						g1.fillRoundRect(rect.x, rect.y, rect.width, rect.height, shape.getRoundRec(), shape.getRoundRec());
 					break;
 				/* TRI, PENTA, HEXA, STAR 모드는 직접 만든 메소드를 이용해 도형을 구현함 (drawPolygon()사용) */
 				case TRI :
@@ -234,6 +233,7 @@ public class PaintPanel extends JPanel {
 				((Graphics2D) g1).setStroke(shape.getStroke(drawM));
 				if (drawM == ERASE)	// 지우개일 때, 선 굵기 / 색 설정
 				{
+					/* 배경 색을 지우개 색상으로 설정 */
 					g1.setColor(bgColor);
 					/* 지우개는 굵기의 최저값이 10이도록 설정 */
 					if (shape.getIntStroke(drawM) < 10)
@@ -284,9 +284,9 @@ public class PaintPanel extends JPanel {
 						break;
 					case ROUNDREC :
 						if (shape.fill == false)
-							g2.drawRoundRect(rect.x, rect.y, rect.width, rect.height, 50, 50);	//뒤에 두 인자는 둥근 정도 수치
+							g2.drawRoundRect(rect.x, rect.y, rect.width, rect.height, shape.getRoundRec(), shape.getRoundRec());	//뒤에 두 인자는 둥근 정도 수치
 						else
-							g2.fillRoundRect(rect.x, rect.y, rect.width, rect.height, 50, 50);
+							g2.fillRoundRect(rect.x, rect.y, rect.width, rect.height, shape.getRoundRec(), shape.getRoundRec());
 						break;
 					case TRI : 
 						drawTriangle(g2, sp, ep, rect, shape.fill);
@@ -326,6 +326,7 @@ public class PaintPanel extends JPanel {
 	/** 선 유형 설정해주는 메소드 */
 	public void setStrokeType(Graphics g, int type)
 	{
+		float[] dash;
 		switch (type)
 		{
 			case 1 : // 실선 : 아무것도 안해줌
@@ -333,9 +334,19 @@ public class PaintPanel extends JPanel {
 				((Graphics2D) g1).setStroke(shape.getStroke(drawM));
 				break;	
 			case 2 : // 점선 : 선 유형 바꿔주기
-				float[] dash = new float[] { 10, 10, 10, 10 };
+				dash = new float[] { 5, 5, 5, 5 };
 				((Graphics2D) g).setStroke(new BasicStroke(shape.getIntStroke(drawM), 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
 				((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(drawM), 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
+				break;
+			case 3 : // 점선 : 선 유형 바꿔주기
+				dash = new float[] { 10, 10, 10, 10 };
+				((Graphics2D) g).setStroke(new BasicStroke(shape.getIntStroke(drawM), 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
+				((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(drawM), 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
+				break;
+			case 4 : // 점선 : 선 유형 바꿔주기
+				dash = new float[] { 10, 10, 10, 10 };
+				((Graphics2D) g).setStroke(new BasicStroke(shape.getIntStroke(drawM), BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
+				((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(drawM), BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
 				break;
 		}
 	}

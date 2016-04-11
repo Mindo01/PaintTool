@@ -23,6 +23,7 @@ public class ShapeInfo {
 	int[] strokeInt = new int[3];	//선 굵기 정수형 값
 	int strokeType;					//선 유형
 	public boolean fill;			//채우기 여부	true 채우기 / false 안채우기
+	public int roundRec;
 	/* 생성자 */
 	public ShapeInfo () {
 		color = Color.BLACK;
@@ -32,6 +33,7 @@ public class ShapeInfo {
 		strokeInt[2] = 1;
 		strokeType = 1;
 		opacity = 255;
+		roundRec = 30;
 	}
 	/** 벡터에 포인트 저장 : add 시점의 좌표 저장 */
 	public void add(Point point) {
@@ -84,12 +86,24 @@ public class ShapeInfo {
 	public void setStrokeType(String type) {
 		if (type.equals("실선"))
 			this.strokeType = 1;
-		if (type.equals("점선"))
+		if (type.equals("점선 1"))
 			this.strokeType = 2;
+		if (type.equals("점선 2"))
+			this.strokeType = 3;
+		if (type.equals("점선 3"))
+			this.strokeType = 4;
 	}
 	/** 선 유형 불러오기 */
 	public int getStrokeType() {
 		return strokeType;
+	}
+	/** 둥근 사각형 둥근 정도 설정하기 */
+	public void setRoundRec(int round) {
+		this.roundRec = round;
+	}
+	/** 둥근 사각형 둥근 정도 반환하기 */
+	public int getRoundRec() {
+		return roundRec;
 	}
 	/** 투명도 설정하기 */
 	public void setOpacity(Color c, int op) {

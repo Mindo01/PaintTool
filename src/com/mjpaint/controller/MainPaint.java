@@ -6,10 +6,7 @@ import java.net.URL;
 import javax.swing.*;
 
 import com.mjpaint.model.ImageButton;
-import com.mjpaint.view.ColorPalette;
-import com.mjpaint.view.MJDialog;
-import com.mjpaint.view.NowColorPalette;
-import com.mjpaint.view.PaintPanel;
+import com.mjpaint.view.*;
 
 /**
  * 메인 프로그램 : JFrame 상속
@@ -35,7 +32,7 @@ public class MainPaint extends JFrame {
 	String[] strSize = {"선 굵기 1", "선 굵기 5", "선 굵기 10", "선 굵기 25", "선 굵기 40", "선 굵기 60"};
 	int[] strValue = {1, 5, 10, 25, 40, 60};
 	/* 선 유형 종류를 나타내는 배열 */
-	String[] strType = {"실선", "점선"};
+	String[] strType = {"실선", "점선 1", "점선 2", "점선 3"};
 	
 	/* PaintPanel 에서도 접근하게 되는 객체들 -> static 으로 선언해 접근가능하도록 한다 */
 	public static JComboBox strokeValue;		// 선 굵기를 나타내는 JComboBox 객체
@@ -114,6 +111,7 @@ public class MainPaint extends JFrame {
 		JMenuBar mb;
 		JMenu fileMenu, editMenu, helpMenu;	// 메뉴바에 부착되는 메뉴들 : 파일, 편집, 도움
 		JMenuItem newFile, save, saveAs, open;	// 새로만들기, 저장, 다른 이름으로 저장, 열기
+		JMenuItem rRec;							// 둥근 사각형 정도 설정하기
 		JMenuItem select, copy, cut, paste;		// 선택 모드, 복사, 자르기, 붙여넣기
 		JMenuItem nameM, iconM;		// 만든 이 정보, 아이콘 출처 정보
 		/* 메뉴바 */
@@ -143,16 +141,18 @@ public class MainPaint extends JFrame {
 		save.setAccelerator(KeyStroke.getKeyStroke('S', InputEvent.CTRL_MASK));
 		saveAs.setAccelerator(KeyStroke.getKeyStroke('S', InputEvent.SHIFT_MASK + InputEvent.CTRL_MASK));
 		open.setAccelerator(KeyStroke.getKeyStroke('G', InputEvent.CTRL_MASK));
-		// 도구 하위 아이템
+		// 편집 하위 아이템
 		select = new JMenuItem("선택");
 		copy = new JMenuItem("복사");
 		cut = new JMenuItem("자르기");
 		paste = new JMenuItem("붙여넣기");
-		// 도구 하위 아이템 단축키 설정
+		rRec = new JMenuItem("둥근 사각형 정도 설정");
+		// 편집 하위 아이템 단축키 설정
 		select.setAccelerator(KeyStroke.getKeyStroke("S"));
 		copy.setAccelerator(KeyStroke.getKeyStroke('C', InputEvent.CTRL_MASK));
 		cut.setAccelerator(KeyStroke.getKeyStroke('X', InputEvent.CTRL_MASK));
 		paste.setAccelerator(KeyStroke.getKeyStroke('V', InputEvent.CTRL_MASK));
+		rRec.setAccelerator(KeyStroke.getKeyStroke("R"));
 		// 도움 하위 아이템
 		nameM = new JMenuItem("만든이 정보");
 		iconM = new JMenuItem("아이콘 출처");
@@ -229,6 +229,16 @@ public class MainPaint extends JFrame {
 				drawP.paste();	//선택 모드에서 지정된 영역에 붙여넣기
 			}
 		});
+		// 5) 둥근 정도 설정
+		TextDialog dg = new TextDialog(this, "둥근 정도 설정");
+		rRec.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				//TODO : 둥근 정도 받아서 drawP.shape.setRoundRec(int)으로 설정하기
+				dg.setVisible(true);
+				drawP.shape.setRoundRec(dg.value);
+			}
+		});
 		/* 만든이 정보 다이얼로그 */
 		MJDialog myCopy = new MJDialog(this,"만든이 정보", 1);
 		MJDialog iconCopy = new MJDialog(this, "아이콘 출처", 2);
@@ -254,6 +264,8 @@ public class MainPaint extends JFrame {
 		editMenu.add(copy);
 		editMenu.add(cut);
 		editMenu.add(paste);
+		editMenu.addSeparator();
+		editMenu.add(rRec);
 		helpMenu.add(nameM);
 		helpMenu.add(iconM);
 		// 메뉴 바에 메뉴 등록
