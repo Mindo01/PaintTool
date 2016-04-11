@@ -16,7 +16,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
  * 3. drawTriangle/Pentagon/Hexagon/Star 메소드 구현으로 특수도형 그리기 구현
  * 4. init() 메소드로 그림판 새로 시작하는 메소드 구현
  * 5. 그리기 모드에 대응하는 상수들 선언 :
- * 		PENCIL BRUSH DASH ERASE LINE REC OVAL ROUNDREC TRI PENTA HEXA STAR
+ * 		PENCIL BRUSH HIGHLIGHT ERASE LINE REC OVAL ROUNDREC TRI PENTA HEXA STAR
  * */
 public class PaintPanel extends JPanel {
 	/* 버퍼 이미지 객체 2개 
@@ -38,7 +38,7 @@ public class PaintPanel extends JPanel {
 	final static int SELECT = 0;	//선택모드
 	final static int PENCIL = 1;	//자유 곡선
 	final static int BRUSH = 2;		//붓
-	final static int DASH = 3;		//점선
+	final static int HIGHLIGHT = 3;		//점선
 	final static int ERASE = 4;		//지우기
 	final static int LINE = 5;		//직선
 	final static int REC = 6;		//네모
@@ -102,6 +102,10 @@ public class PaintPanel extends JPanel {
 			}
 			if (drawM == SPOID)
 				return ;
+			if (drawM == HIGHLIGHT)
+				shape.setOpacity(shape.getColor(), 30);
+			else
+				shape.setOpacity(shape.getColor(), 255);
 			/* 첫 시작점 shape 객체 내 포인트 벡터에 저장 
 			 * (이 상태에서는 포인트 벡터 내에 아무 포인트도 없는 상태) */
 			shape.add(e.getPoint());
@@ -148,9 +152,11 @@ public class PaintPanel extends JPanel {
 					((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(drawM), BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
 					g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
 					break;
-				case DASH :
-					float[] dash = new float[] { 10, 10, 10, 10 };
-					((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(drawM), 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
+				case HIGHLIGHT :
+					sp = shape.point.size() > 1 ? shape.point.get(shape.point.size() - 2) : shape.point.firstElement();
+					((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(drawM), BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
+					g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
+					break;
 				case LINE : 
 					g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
 					break;
@@ -216,7 +222,7 @@ public class PaintPanel extends JPanel {
 			 * 자유곡선, 지우기는 드래그도 그대로 그림판에 입력
 			 * 나머지 기능은 드래그 과정은 그냥 보여주기만 (실질적 입력이 아님 - 지역 객체 g2 사용)
 			 */
-			if (drawM == PENCIL || drawM == BRUSH || drawM == ERASE )	// 자유곡선, 지우개일 때
+			if (drawM == PENCIL || drawM == BRUSH || drawM == ERASE || drawM == HIGHLIGHT )	// 자유곡선, 지우개일 때
 			{
 				((Graphics2D) g1).setStroke(shape.stroke);
 				if (drawM == ERASE)
@@ -232,7 +238,7 @@ public class PaintPanel extends JPanel {
 				}
 				/* 선 그릴 때, 선이 제대로 연결되도록, 바로 이전의 포인트와 계속해서 연결 */
 				sp = shape.point.size() > 1 ? shape.point.get(shape.point.size() - 2) : shape.point.firstElement();
-				if (drawM == BRUSH)
+				if (drawM == BRUSH || drawM == HIGHLIGHT)
 				{
 					((Graphics2D) g1).setStroke(new BasicStroke(shape.getIntStroke(drawM), BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
 					g1.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
@@ -251,9 +257,6 @@ public class PaintPanel extends JPanel {
 				g2.setColor(shape.getColor());				//임시 객체 선 색 설정하기
 				switch (drawM)
 				{
-					case DASH : 
-						float[] dash = new float[] { 10, 10, 10, 10 };
-						((Graphics2D) g2).setStroke(new BasicStroke(shape.getIntStroke(drawM), 0, BasicStroke.JOIN_MITER, 1.0f, dash, 0));
 					case LINE : 
 						g2.drawLine((int)sp.getX(), (int)sp.getY(), (int)ep.getX(), (int)ep.getY());
 						break;
@@ -345,19 +348,26 @@ public class PaintPanel extends JPanel {
 	}
 	/** PENTA : pentagon : 오각형 그리는 메소드 */
 	public void drawPentagon(Graphics g, Point sp, Point ep, Rectangle rect, boolean fill) {
-		int r = rect.width;
-		int[] x = {sp.x, ((ep.x - (sp.x+ep.x)/2)/2+ep.x+sp.x)/2, (ep.x - (sp.x + ep.x)/2)/2+ep.x, ep.x, ((sp.x+ep.x)/2-sp.x)/2+sp.x };
-		int[] y = {sp.y, sp.y - (ep.y-sp.y)/2, sp.y, ep.y, ep.y};
-		/* 기준 점을 드래그하는 점과 점 사이의 중간점으로 설정 */
-		int standX = (sp.x + ep.x)/2;
-		int standY = (sp.y + ep.y)/2;
-		//g.translate(standX, standY);
+		int rw = rect.width;
+		int rh = rect.height;
+        int[] x = new int[5];
+        int[] y = new int[5];
+        x[0] = (sp.x+ep.x)/2;
+        y[0] = sp.y;
+        x[1] = sp.x;
+        y[1] = sp.y < ep.y? sp.y+rh*5/14 : sp.y-rh*5/14;
+        x[2] = sp.x < ep.x? sp.x+rw*1/5 : sp.x-rw*1/5;
+        y[2] = ep.y;
+        x[3] = sp.x < ep.x? sp.x+rw*29/36 : sp.x-rw*29/36;
+        y[3] = ep.y;
+        x[4] = ep.x;
+        y[4] = sp.y < ep.y? sp.y+rh*5/14 : sp.y-rh*5/14;
+
 		/* 도형 채우기 여부 */
 		if (fill == false)
 			g.drawPolygon(x, y, x.length);
 		else
 			g.fillPolygon(x, y, x.length);
-		//g.translate(-standX, -standY);
 	}
 	/** HEXA : hexagon : 육각형 그리는 메소드 */
 	public void drawHexagon(Graphics g, Point sp, Point ep, Rectangle rect, boolean fill) {
@@ -391,25 +401,25 @@ public class PaintPanel extends JPanel {
 	}
 	/** STAR : star : 별 모양 그리는 메소드 */
 	public void drawStar(Graphics g, Point sp, Point ep, Rectangle rect, boolean fill) {
-		int r = rect.width;
-		int[] x = new int[10];
-		int[] y = new int[10];
-		int cx = r;
-		int cy = rect.height;
-		int r1 = Math.min(cx, cy) - 10;
-		int r2 = Math.min(cx, cy) / 2;
-		for (int i = 0; i < 10; i++)
-		{
-			x[i] = cx + (int)(r1 * Math.cos(i * Math.PI / 5 - Math.PI / 2));
-			y[i] = cy + (int)(r1 * Math.sin(i * Math.PI / 5 - Math.PI / 2));
-			i++;
-			x[i] = cx + (int)(r2 * Math.cos((i+1) * Math.PI / 5 - Math.PI / 2));
-			y[i] = cy + (int)(r2 * Math.sin((i+1) * Math.PI / 5 - Math.PI / 2));
-		}
+		int rw = rect.width;
+		int rh = rect.height;
+        // cx라는 변수는 양 x좌표의 중간값 (그래서 2로 나눔)
+        int cx=(sp.x+ep.x)/2;
+        // 첫 번째 x좌표는 가장 오른쪽에 위치하는 x좌표
+        int x1=ep.x>sp.x?sp.x:ep.x;
+        // 두 번째 x좌표는 가장 왼쪽에 위치하는 x좌표
+        int x2=ep.x>sp.x?ep.x:sp.x;
+        // 첫 번재 y좌표는 가장 위에 위치한 y좌표 (수직선에서는 y가 위로가면 커지지만 자바에서는 작아짐)
+        int y1=ep.y>sp.y?ep.y:sp.y;
+        // 두 번재 y좌표는 가장 아래에 위치한 y좌표 (수직선에서는 y가 위로가면 커지지만 자바에서는 작아짐)
+        int y2=ep.y>sp.y?sp.y:ep.y;
+		int x[]={cx, x1+rw*8/13, x2, x1+rw*25/35, x1+rw*29/36, cx,x1+rw*1/5, x1+rw*10/35, x1, x1+rw*5/13};
+        int y[]={y2, y2+rh*5/14, y2+rh*5/14, y2+rh*19/31, y1, y2+rh*23/30, y1, y2+rh*19/31, y2+rh*5/14, y2+rh*5/14};
 		/* 기준 점을 드래그하는 점과 점 사이의 중간점으로 설정 */
-		g.translate(sp.x, sp.y);
-		g.drawPolygon(x, y, x.length);
-		g.translate(-sp.x, -sp.y);
+        if (fill == false)
+        	g.drawPolygon(x, y, x.length);
+        else
+        	g.fillPolygon(x, y, x.length);
 	}
 	
 	
@@ -481,7 +491,7 @@ public class PaintPanel extends JPanel {
 		/* 열기 다이얼로그 출력 */
 		int ret = chooser.showSaveDialog(null);
 		/* 닫기 버튼 입력 시 그냥 닫기 */
-		if (ret == JFileChooser.CANCEL_OPTION) {
+		if (ret == JFileChooser.CANCEL_OPTION || ret == JOptionPane.CLOSED_OPTION) {
 			return null;
 		}
 

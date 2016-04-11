@@ -15,7 +15,7 @@ public class MainPaint extends JFrame {
 	JPanel mainP;
 	PaintPanel drawP;
 	String[] btnName = {"자유", "붓", "점선", "지우개", "선", "네모", "동글", "둥근네모", "세모", "오각형", "육각형", "별"};
-	String[] path = {"draw_pencil.png", "draw_brush.png", "draw_dash.png", "draw_eraser.png", "draw_line.png", "draw_rectangle.png", "draw_oval.png", "draw_roundedrec.png", "draw_triangle.png", "draw_penta.png", "draw_hexa.png", "draw_star.png"};
+	String[] path = {"draw_pencil.png", "draw_brush.png", "draw_highlight.png", "draw_eraser.png", "draw_line.png", "draw_rectangle.png", "draw_oval.png", "draw_roundedrec.png", "draw_triangle.png", "draw_penta.png", "draw_hexa.png", "draw_star.png"};
 	ImageButton[] Tbtn = new ImageButton[12];
 	ButtonGroup bg = new ButtonGroup();	//토글 버튼들 묶어주는 버튼 그룹
 	String[] strSize = {"선 굵기 1", "선 굵기 5", "선 굵기 10", "선 굵기 25", "선 굵기 40", "선 굵기 60"};
@@ -28,7 +28,37 @@ public class MainPaint extends JFrame {
 	/* 생성자 */
 	public MainPaint() {
 		setTitle("민주 그림판 - 제목 없음.png");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		/* 제목표시줄 닫기 버튼의 default를 아무작동 안하는 것으로 설정하고,
+		 * windowListener의 windowClosing을 이용해, 
+		 * 변경 사항이 있을 경우 저장하기 다이얼로그를 띄우는 방식으로 설정함.
+		 * (그냥 닫기 버튼이나 저장 다이얼로그 상태에서 취소를 누를 때, */
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				JFrame frame = (JFrame)e.getWindow();
+				if (drawP.changedFile == true)
+				{
+					/* 변경 사항 저장할 건지 물어보기 */
+					JLabel message = new JLabel();
+					message.setText("변경 사항을 저장하시겠습니까?");
+					int ret = JOptionPane.showConfirmDialog(null, message, "종료 전 확인", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+					/* 1. 저장 YES(확인) 누를 경우 */
+					if (ret == JOptionPane.YES_OPTION)
+					{
+						String str = drawP.saveAs();
+						if (str == null)
+							return ;
+					}
+					/* 2. 저장 CANCEL(취소) 또는 창 종료 버튼 누를 경우 */
+					if (ret == JOptionPane.CANCEL_OPTION || ret == JOptionPane.CLOSED_OPTION)
+					{
+						return ;
+					}
+				}
+				System.exit(0);
+			}
+		});
 		/* 화면 중앙에 생성 */
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		setLocation((screenSize.width-1100)/2, (screenSize.height-830)/2);
@@ -100,6 +130,7 @@ public class MainPaint extends JFrame {
 		// 도움 하위 아이템
 		nameM = new JMenuItem("만든이 정보");
 		/* 메뉴 아이템에 대한 리스너 등록 */
+		// 1) 새로 만들기
 		newFile.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -110,15 +141,17 @@ public class MainPaint extends JFrame {
 				setTitle("민주 그림판 - 제목 없음.png");
 			}
 		});
+		// 2) 저장
 		save.addActionListener(new ActionListener() {		
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String title = drawP.save();
 				/* 타이틀에 방금 저장한 파일 이름 띄우기 */
-				if (title == null)
+				if (title != null)
 					setTitle("민주 그림판 - "+title);
 			}
 		});
+		// 3) 다른이름으로 저장
 		saveAs.addActionListener(new ActionListener() {		
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -128,6 +161,7 @@ public class MainPaint extends JFrame {
 					setTitle("민주 그림판 - "+title);
 			}
 		});
+		// 4) 열기
 		open.addActionListener(new ActionListener() {		
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -140,24 +174,28 @@ public class MainPaint extends JFrame {
 			}
 		});
 		/* 도구 메뉴 아이템들 리스너 등록 */
+		// 1) 선택 모드
 		select.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				drawP.drawM = 0;	//선택 모드로 설정
 			}
 		});
+		// 2) 복사하기
 		copy.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				drawP.copy();	//선택 모드에서 지정된 영역 복사
 			}
 		});
+		// 3) 자르기
 		cut.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				drawP.cut();	//선택 모드에서 지정된 영역 자르기
 			}
 		});
+		// 4) 붙여넣기
 		paste.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {

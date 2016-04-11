@@ -15,7 +15,7 @@ public class ShapeInfo {
 	int opacity;		//투명도
 	BasicStroke stroke;	//선 굵기
 	/* 자유 곡선, 붓 / 지우개 / 도형 에 대해 각각의 선 굵기 주기 
-	 * 0 : 자유 곡선, 붓
+	 * 0 : 자유 곡선, 붓, 형광펜
 	 * 1 : 지우개
 	 * 2 : 도형 
 	 * */
@@ -96,15 +96,15 @@ public class ShapeInfo {
 		color = new Color(c.getRed(), c.getGreen(), c.getBlue(), op);
 	}
 	/** 도구에 따른 유형을 세 분류로 나눠 반환하기
-	 * 0 : 자유 곡선, 붓
+	 * 0 : 자유 곡선, 붓, 형광펜
 	 * 1 : 지우개
-	 * 2 : 점선, 직선, 도형들  */
+	 * 2 : 직선, 도형들  */
 	public int getType(int value)
 	{
 		/* 그리기 모드에 대응하는 상수들 */
 		final int PENCIL = 1;	//자유 곡선
 		final int BRUSH = 2;	//붓
-		final int DASH = 3;		//점선
+		final int HIGHLIGHT = 3;		//점선
 		final int ERASE = 4;	//지우기
 		final int LINE = 5;		//직선
 		final int REC = 6;		//네모
@@ -116,12 +116,11 @@ public class ShapeInfo {
 		final int STAR = 12;	//별
 		switch (value)
 		{
-			case PENCIL : case BRUSH :
+			case PENCIL : case BRUSH : case HIGHLIGHT :
 				return 0;
 			case ERASE :
 				return 1;
-			case DASH : case LINE :
-			case REC : case OVAL : case ROUNDREC : case TRI : case PENTA : case HEXA : case STAR :
+			case LINE : case REC : case OVAL : case ROUNDREC : case TRI : case PENTA : case HEXA : case STAR :
 				return 2;
 		}
 		return 0;
