@@ -36,6 +36,7 @@ public class PaintPanel extends JPanel {
 	public Color bgColor;			// 배경색 저장
 	public int drawM = 1;			// 그리기 모드
 	public boolean changedFile = false;	//변경사항 여부에 대해 저장
+	public boolean imgInsert = false;	//그림 삽입에 대한 플래그 : 그림 삽입 버튼을 눌렀을 때 true가 됨
 	Rectangle selectArea;	// 선택 영역 저장하는 네모
 	/* 그리기 모드에 대응하는 상수들 */
 	final static int SELECT = 0;	//선택모드
@@ -93,6 +94,32 @@ public class PaintPanel extends JPanel {
 		g1.fillRect(selectArea.x, selectArea.y, selectArea.width, selectArea.height);
 		repaint();
 	}
+	/** 그림 삽입하는 메소드
+	 * - 열기와 비슷하게 이미지를 열고, 선택 모드로 그려진 사각형 안에 이미지 삽입하는 메소드 */
+	public String imageCopy() {
+		/* JFileChooser 객체 생성 */
+		JFileChooser chooser = new JFileChooser();
+		/* 파일 필터 객체 생성 : png, jpg */
+		FileNameExtensionFilter filter1 = new FileNameExtensionFilter("PNG(*.png)", "png");
+		FileNameExtensionFilter filter2 = new FileNameExtensionFilter("JPG(*.jpg)", "jpg");
+		/* chooser에 파일 필터 설정 */
+		chooser.setFileFilter(filter1);
+		chooser.setFileFilter(filter2);
+		/* 열기 다이얼로그 출력 */
+		int ret = chooser.showOpenDialog(null);
+		/* 파일 선택 안할 시 경고창 띄우기 */
+		if (ret != JFileChooser.APPROVE_OPTION) {
+			JOptionPane.showMessageDialog(null, "파일을 선택하지 않았습니다", "경고", JOptionPane.WARNING_MESSAGE);
+			return null;
+		}
+		/* 사용자가 선택한 파일 이름 알아내기 */
+		String pathName = chooser.getSelectedFile().getPath();
+		String fileName = chooser.getSelectedFile().getName();
+		/* 이미지를 g2 객체(복사하는 공간)에 그려두기 */
+		Image img = new ImageIcon(pathName).getImage();
+		g2.drawImage(img, 0, 0, 1000, 800, 0, 0, img.getWidth(null), img.getHeight(null), null);
+		return "Success";
+	}
 	
 	
 	/* 마우스 클릭과 클릭해제, 드래그에 따라 다르게 반응하는 리스너 */
@@ -125,7 +152,15 @@ public class PaintPanel extends JPanel {
 		public void mouseReleased(MouseEvent e) {
 			/* 선택 모드일 때 */
 			if (drawM == SELECT)
+			{
+				/* 그림 삽입 모드 일 때 */
+				if (imgInsert == true)
+				{
+					imgInsert = false;
+					paste();
+				}
 				return ;
+			}
 			/* 스포이드 일 때, 
 			 * 마우스 클릭 해제된 순간의 픽셀값(mouseMoved에 의해 spoidBtn의 배경색이 되어 있음)
 			 * 으로 현재 색, 배경 색 설정 */
@@ -468,6 +503,7 @@ public class PaintPanel extends JPanel {
 		}
 		g1.setColor(Color.WHITE);
 		g1.fillRect(0, 0, 1000, 800);
+		/* 패널에 이미지 그려주기 (path 있으면 그 이미지, 없으면 빈 패널로 초기화) */
 		g1.drawImage(new ImageIcon(path).getImage(), 0, 0, null);
 		repaint();
 		// 변경내용 플래그 다시 원래대로

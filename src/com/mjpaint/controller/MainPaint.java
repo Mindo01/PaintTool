@@ -111,7 +111,7 @@ public class MainPaint extends JFrame {
 		JMenuBar mb;
 		JMenu fileMenu, editMenu, helpMenu;	// 메뉴바에 부착되는 메뉴들 : 파일, 편집, 도움
 		JMenuItem newFile, save, saveAs, open;	// 새로만들기, 저장, 다른 이름으로 저장, 열기
-		JMenuItem rRec;							// 둥근 사각형 정도 설정하기
+		JMenuItem imgInsert, rRec;				// 이미지 삽입, 둥근 사각형 정도 설정하기
 		JMenuItem select, copy, cut, paste;		// 선택 모드, 복사, 자르기, 붙여넣기
 		JMenuItem nameM, iconM;		// 만든 이 정보, 아이콘 출처 정보
 		/* 메뉴바 */
@@ -146,12 +146,14 @@ public class MainPaint extends JFrame {
 		copy = new JMenuItem("복사");
 		cut = new JMenuItem("자르기");
 		paste = new JMenuItem("붙여넣기");
+		imgInsert = new JMenuItem("그림 삽입");
 		rRec = new JMenuItem("둥근 사각형 정도 설정");
 		// 편집 하위 아이템 단축키 설정
 		select.setAccelerator(KeyStroke.getKeyStroke("S"));
 		copy.setAccelerator(KeyStroke.getKeyStroke('C', InputEvent.CTRL_MASK));
 		cut.setAccelerator(KeyStroke.getKeyStroke('X', InputEvent.CTRL_MASK));
 		paste.setAccelerator(KeyStroke.getKeyStroke('V', InputEvent.CTRL_MASK));
+		imgInsert.setAccelerator(KeyStroke.getKeyStroke('I', InputEvent.CTRL_MASK));
 		rRec.setAccelerator(KeyStroke.getKeyStroke("R"));
 		// 도움 하위 아이템
 		nameM = new JMenuItem("만든이 정보");
@@ -205,7 +207,7 @@ public class MainPaint extends JFrame {
 		select.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				drawP.drawM = 0;	//선택 모드로 설정
+				drawP.drawM = drawP.SELECT;	//선택 모드로 설정
 			}
 		});
 		// 2) 복사하기
@@ -229,7 +231,20 @@ public class MainPaint extends JFrame {
 				drawP.paste();	//선택 모드에서 지정된 영역에 붙여넣기
 			}
 		});
-		// 5) 둥근 정도 설정
+		// 5) 그림 삽입
+		imgInsert.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// 열기와 비슷하게 이미지를 열고, 선택 모드로 그려진 사각형 안에 이미지 삽입하는 메소드
+				if (drawP.imageCopy() == null)
+				{
+					return ;
+				}
+				drawP.drawM = drawP.SELECT;	//선택 모드로 설정
+				drawP.imgInsert = true;	//그림 삽입 모드
+			}
+		});
+		// 6) 둥근 정도 설정
 		TextDialog dg = new TextDialog(this, "둥근 정도 설정");
 		rRec.addActionListener(new ActionListener() {
 			@Override
@@ -264,6 +279,8 @@ public class MainPaint extends JFrame {
 		editMenu.add(copy);
 		editMenu.add(cut);
 		editMenu.add(paste);
+		editMenu.addSeparator();
+		editMenu.add(imgInsert);
 		editMenu.addSeparator();
 		editMenu.add(rRec);
 		helpMenu.add(nameM);
